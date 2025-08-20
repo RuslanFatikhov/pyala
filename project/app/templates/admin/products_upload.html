@@ -1,0 +1,51 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Загрузка товаров{% endblock %}
+
+{% block content %}
+<h1>Загрузка товаров</h1>
+
+<div class="upload-section">
+    <div class="upload-instructions">
+        <h3>Инструкции по загрузке</h3>
+        <ul>
+            <li>Файл должен быть в формате CSV с кодировкой UTF-8</li>
+            <li>Обязательные колонки: sku, title, price, old_price, category, volume_ml, color, images, stock, is_active, description</li>
+            <li>SKU должны быть уникальными</li>
+            <li>is_active должно быть 0 или 1</li>
+            <li>Изображения разделяются символом |</li>
+            <li>Перед заменой создается автоматический бэкап</li>
+        </ul>
+        
+        <p><a href="{{ url_for('admin.download_products') }}" class="btn btn-outline">Скачать текущий файл</a></p>
+    </div>
+    
+    {% if validation_errors %}
+        <div class="validation-errors">
+            <h3>Ошибки валидации</h3>
+            <ul>
+                {% for error in validation_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+    
+    <form method="POST" enctype="multipart/form-data" class="upload-form">
+        <div class="form-group">
+            <label for="file">Выберите CSV файл:</label>
+            <input type="file" id="file" name="file" accept=".csv" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Загрузить и заменить</button>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline">Отмена</a>
+    </form>
+</div>
+
+<div class="csv-example">
+    <h3>Пример CSV файла</h3>
+    <pre>sku,title,price,old_price,category,volume_ml,color,images,stock,is_active,description
+PIA-001,Пиала целадон 90 мл,5990,,пиалы,90,зелёный,"/static/img/pia001_1.jpg|/static/img/pia001_2.jpg",3,1,"Глазурь целадон"
+PIA-002,Матовая тёмная 70 мл,7990,8990,пиалы,70,чёрный,"https://cdn.site/pia002.jpg",1,1,"Фактурная поверхность"</pre>
+</div>
+{% endblock %}

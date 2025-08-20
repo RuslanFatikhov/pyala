@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block title %}Каталог - Керамические пиалы{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Каталог товаров</h1>
+    
+    <!-- Фильтры -->
+    <div class="filters">
+        <form method="GET" class="filters-form">
+            <div class="filter-group">
+                <label>Категория:</label>
+                <select name="category">
+                    <option value="">Все категории</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat }}" {% if filters.category == cat %}selected{% endif %}>
+                            {{ cat }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>Поиск:</label>
+                <input type="text" name="q" value="{{ filters.q or '' }}" placeholder="Название товара...">
+            </div>
+            
+            <div class="filter-group">
+                <label>Цена от:</label>
+                <input type="number" name="price_min" value="{{ filters.price_min or '' }}" min="0">
+            </div>
+            
+            <div class="filter-group">
+                <label>Цена до:</label>
+                <input type="number" name="price_max" value="{{ filters.price_max or '' }}" min="0">
+            </div>
+            
+            <button type="submit" class="btn btn-secondary">Применить</button>
+            <a href="{{ url_for('public.catalog') }}" class="btn btn-outline">Сбросить</a>
+        </form>
+    </div>
+    
+    <!-- Товары -->
+    <div class="products-grid">
+        {% for product in products %}
+            <div class="product-card">
+                <a href="{{ url_for('public.product_detail', sku=product.sku) }}">
+                    {% if product.images %}
+                        <img src="{{ product.images[0] }}" alt="{{ product.title }}" loading="lazy">
+                    {% else %}
+                        <div class="no-image">Нет фото</div>
+                    {% endif %}
+                    <h3>{{ product.title }}</h3>
+                    <p class="product-category">{{ product.category }}</p>
+                    <div class="price">
+                        {% if product.old_price %}
+                            <span class="old-price">{{ product.old_price }} {{ config.get('CURRENCY', 'RUB') }}</span>
+                        {% endif %}
+                        <span class="current-price">{{ product.price }} {{ config.get('CURRENCY', 'RUB') }}</span>
+                    </div>
+                    <div class="stock-info">
+                        {% if product.stock > 0 %}
+                            <span class="in-stock">В наличии: {{ product.stock }}</span>
+                        {% else %}
+                            <span class="out-of-stock">Нет в наличии</span>
+                        {% endif %}
+                    </div>
+                </a>
+            </div>
+        {% else %}
+            <div class="no-products">
+                <p>Товары не найдены</p>
+                <a href="{{ url_for('public.catalog') }}" class="btn btn-primary">Посмотреть все товары</a>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Пагинация -->
+    {% if total_pages > 1 %}
+        <div class="pagination">
+            {% for page in range(1, total_pages + 1) %}
+                {% if page == current_page %}
+                    <span class="page-current">{{ page }}</span>
+                {% else %}
+                    <a href="{{ url_for('public.catalog', page=page, **filters) }}" class="page-link">{{ page }}</a>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+
+### app/templates/product.html
+```html
+{% extends "base.html" %}
+
+{% block title %}{{ product.title }} - Керамические пиалы{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="product-detail">
+        <div class="product-images">
+            {% if product.images %}
+                <div class="main-image">
+                    <img id="main-product-image" src="{{ product.images[0] }}" alt="{{ product.title }}">
+                </div>
+                {% if product.images|length > 1 %}
+                    <div class="image-thumbnails">
+                        {% for image in product.images %}
+                            <img src="{{ image }}" alt="{{ product.title }}" 
+                                 class="thumbnail {% if loop.first %}active{% endif %}"
+                                 onclick="changeMainImage('{{ image }}', this)">
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="no-image-large">Нет фото</div>
+            {% endif %}
+        </div>
+        
+        <div class="product-info">
+            <h1>{{ product.title }}</h1>
+            
+            <div class="price-section">
+                {% if product.old_price %}
+                    <span class="old-price-large">{{ product.old_price }} {{ config.get('CURRENCY', 'RUB') }}</span>
+                {% endif %}
+                <span class="current-price-large">{{ product.price }} {{ config.get('CURRENCY', 'RUB') }}</span>
+            </div>
+            
+            <div class="product-specs">
+                <h3>Характеристики</h3>
+                <ul>
+                    {% if product.volume_ml %}
+                        <li><strong>Объем:</strong> {{ product.volume_ml }} мл</li>
+                    {% endif %}
+                    {% if product.color %}
+                        <li><strong>Цвет:</strong> {{ product.color }}</li>
+                    {% endif %}
+                    {% if product.category %}
+                        <li><strong>Категория:</strong> {{ product.category }}</li>
+                    {% endif %}
+                </ul>
+            </div>
+            
+            {% if product.description %}
+                <div class="product-description">
+                    <h3>Описание</h3>
+                    <p>{{ product.description }}</p>
+                </div>
+            {% endif %}
+            
+            <div class="add-to-cart-section">
+                {% if product.stock > 0 %}
+                    <div class="quantity-selector">
+                        <label for="quantity">Количество:</label>
+                        <input type="number" id="quantity" value="1" min="1" max="{{ product.stock }}">
+                    </div>
+                    <button class="btn btn-primary btn-large" onclick="addToCart('{{ product.sku }}')">
+                        Добавить в корзину
+                    </button>
+                    <p class="stock-info">В наличии: {{ product.stock }} шт.</p>
+                {% else %}
+                    <button class="btn btn-disabled btn-large" disabled>
+                        Нет в наличии
+                    </button>
+                {% endif %}
+            </div>
+            
+            <div class="delivery-info">
+                <h3>Доставка и возврат</h3>
+                <ul>
+                    <li>Бесплатная доставка от 5000 {{ config.get('CURRENCY', 'RUB') }}</li>
+                    <li>Доставка по России 3-7 дней</li>
+                    <li>Возврат в течение 14 дней</li>
+                    <li>Гарантия качества</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Аналитика: просмотр товара
+    gtag && gtag('event', 'view_item', {
+        currency: '{{ config.get("CURRENCY", "RUB") }}',
+        value: {{ product.price }},
+        items: [{
+            item_id: '{{ product.sku }}',
+            item_name: '{{ product.title }}',
+            category: '{{ product.category }}',
+            price: {{ product.price }},
+            quantity: 1
+        }]
+    });
+
+    function changeMainImage(src, thumbnail) {
+        document.getElementById('main-product-image').src = src;
+        
+        // Обновление активного thumbnail
+        document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
+        thumbnail.classList.add('active');
+    }
+
+    function addToCart(sku) {
+        const quantity = document.getElementById('quantity').value;
+        
+        fetch('/cart/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                sku: sku,
+                qty: parseInt(quantity)
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                updateCartCounter();
+                showNotification('Товар добавлен в корзину', 'success');
+                
+                // Аналитика: добавление в корзину
+                gtag && gtag('event', 'add_to_cart', {
+                    currency: '{{ config.get("CURRENCY", "RUB") }}',
+                    value: {{ product.price }} * parseInt(quantity),
+                    items: [{
+                        item_id: '{{ product.sku }}',
+                        item_name: '{{ product.title }}',
+                        category: '{{ product.category }}',
+                        price: {{ product.price }},
+                        quantity: parseInt(quantity)
+                    }]
+                });
+            } else {
+                showNotification(data.error, 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Ошибка добавления товара', 'error');
+        });
+    }
+</script>
+{% endblock %}

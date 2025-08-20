@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Главная - Керамические пиалы{% endblock %}
+{% block content %}
+<div class="hero">
+    <div class="container">
+        <h1>Керамические пиалы ручной работы</h1>
+        <p>Уникальные изделия для ценителей настоящего чая</p>
+        <a href="{{ url_for('public.catalog') }}" class="btn btn-primary">Смотреть каталог</a>
+    </div>
+</div>
+
+<section class="featured-products">
+    <div class="container">
+        <h2>Рекомендуемые товары</h2>
+        <div class="products-grid">
+            {% for product in products %}
+            <div class="product-card">
+                <a href="{{ url_for('public.product_detail', sku=product.sku) }}">
+                    {% if product.images and product.images|length > 0 %}
+                        <div class="product-image">
+                            <img class="main-image"
+                                 src="{{ product.images[0] }}"
+                                 alt="{{ product.title }}"
+                                 loading="lazy">
+                            {% if product.images|length > 1 %}
+                            <img class="secondary-image"
+                                 src="{{ product.images[1] }}"
+                                 alt="{{ product.title }}"
+                                 loading="lazy">
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="product-image">
+                            <img class="main-image"
+                                 src="/static/img/no-image.jpg"
+                                 alt="Изображение недоступно"
+                                 loading="lazy">
+                        </div>
+                    {% endif %}
+                    <h3>{{ product.title }}</h3>
+                    <div class="price">
+                        <span class="current-price">{{ product.price }} {{ config.get('CURRENCY', 'RUB') }}</span>
+                        {% if product.old_price %}
+                        <span class="old-price">{{ product.old_price }} {{ config.get('CURRENCY', 'RUB') }}</span>
+                        {% endif %}
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

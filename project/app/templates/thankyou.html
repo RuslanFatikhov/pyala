@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Спасибо за заказ - Керамические пиалы{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="thank-you-page">
+        <div class="success-icon">✅</div>
+        <h1>Спасибо за заказ!</h1>
+        
+        {% if order_id %}
+            <p class="order-number">Номер вашего заказа: <strong>#{{ order_id }}</strong></p>
+        {% endif %}
+        
+        <div class="thank-you-message">
+            <p>Ваш заказ успешно принят и передан в обработку.</p>
+            <p>Мы свяжемся с вами в ближайшее время для подтверждения деталей доставки.</p>
+        </div>
+        
+        <div class="next-steps">
+            <h3>Что дальше?</h3>
+            <ul>
+                <li>Мы обработаем ваш заказ в течение 1-2 рабочих дней</li>
+                <li>Наш менеджер свяжется с вами для подтверждения</li>
+                <li>Доставка осуществляется в течение 3-7 рабочих дней</li>
+                <li>Оплата производится при получении товара</li>
+            </ul>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="{{ url_for('public.catalog') }}" class="btn btn-primary">
+                Продолжить покупки
+            </a>
+            <a href="{{ url_for('public.home') }}" class="btn btn-outline">
+                На главную
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Аналитика: успешное оформление заказа
+    {% if order_id %}
+    gtag && gtag('event', 'purchase_ok', {
+        transaction_id: '{{ order_id }}',
+        currency: '{{ config.get("CURRENCY", "RUB") }}'
+    });
+    {% endif %}
+</script>
+{% endblock %}

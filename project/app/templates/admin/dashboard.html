@@ -1,0 +1,58 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Панель управления{% endblock %}
+
+{% block content %}
+<h1>Панель управления</h1>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>Товары</h3>
+        <div class="stat-number">{{ stats.total_products }}</div>
+        <div class="stat-label">Всего товаров</div>
+    </div>
+    
+    <div class="stat-card">
+        <h3>Активные товары</h3>
+        <div class="stat-number">{{ stats.active_products }}</div>
+        <div class="stat-label">В продаже</div>
+    </div>
+    
+    <div class="stat-card">
+        <h3>Заказы</h3>
+        <div class="stat-number">{{ stats.total_orders }}</div>
+        <div class="stat-label">Всего заказов</div>
+    </div>
+    
+    <div class="stat-card">
+        <h3>Новые заказы</h3>
+        <div class="stat-number">{{ stats.new_orders }}</div>
+        <div class="stat-label">Требуют обработки</div>
+    </div>
+</div>
+
+<div class="quick-actions">
+    <h2>Быстрые действия</h2>
+    <div class="actions-grid">
+        <a href="{{ url_for('admin.upload_products') }}" class="action-card">
+            <h3>📦 Обновить товары</h3>
+            <p>Загрузить новый CSV файл товаров</p>
+        </a>
+        
+        <a href="{{ url_for('admin.orders_list') }}" class="action-card">
+            <h3>📋 Заказы</h3>
+            <p>Просмотр и управление заказами</p>
+        </a>
+        
+        <a href="{{ url_for('admin.download_products') }}" class="action-card">
+            <h3>⬇️ Скачать товары</h3>
+            <p>Экспорт текущего файла товаров</p>
+        </a>
+        
+        <a href="{{ url_for('admin.download_orders') }}" class="action-card">
+            <h3>⬇️ Скачать заказы</h3>
+            <p>Экспорт файла заказов</p>
+        </a>
+    </div>
+</div>
+{% endblock %}
