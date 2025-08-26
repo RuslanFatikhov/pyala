@@ -109,21 +109,10 @@
 
         <!-- Добавление в корзину -->
         <div class="add-to-cart-section">
-            {% if product.stock > 0 %}
                 <button class="btn-large-color1" 
                         onclick="addToCartFromPDP('{{ product.sku }}')">
                     Добавить в корзину
                 </button>
-            {% else %}
-                <div class="stock-status out-of-stock">
-                    <span class="stock-icon">✗</span>
-                    <span>Нет в наличии</span>
-                </div>
-                
-                <button class="btn btn-disabled btn-large" disabled>
-                    Товара нет в наличии
-                </button>
-            {% endif %}
         </div>
     </div>
 </div>
@@ -191,21 +180,11 @@
 
         <!-- Добавление в корзину -->
         <div class="add-to-cart-section-desktop">
-            {% if product.stock > 0 %}
                 <button class="btn-large-color1" 
                         onclick="addToCartFromPDP('{{ product.sku }}')">
                     Добавить в корзину
                 </button>
-            {% else %}
-                <div class="stock-status out-of-stock">
-                    <span class="stock-icon">✗</span>
-                    <span>Нет в наличии</span>
-                </div>
-                
-                <button class="btn btn-disabled btn-large" disabled>
-                    Товара нет в наличии
-                </button>
-            {% endif %}
+
         </div>
 
         <div class="product-tabs">

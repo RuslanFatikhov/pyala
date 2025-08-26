@@ -1,120 +1,91 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Корзина - Керамические пиалы</title>
 
-{% block title %}Корзина - Керамические пиалы{% endblock %}
+    <!--CSS-->
+    <link href="{{ url_for('static', filename='css/reset.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/typo.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/colors.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/product.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/button.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/notifications.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/cart.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/modal.css') }}" rel="stylesheet">
 
-{% block content %}
-<div class="container">
-    <h1>Корзина</h1>
-    
-    {% if cart_items %}
-        <div class="cart-items">
-            {% set total = 0 %}
-            {% for item in cart_items %}
-                <div class="cart-item" data-sku="{{ item.product.sku }}">
-                    <div class="item-image">
-                        {% if item.product.images %}
-                            <img src="{{ item.product.images[0] }}" alt="{{ item.product.title }}">
-                        {% else %}
-                            <div class="no-image">Нет фото</div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="item-info">
-                        <h3>{{ item.product.title }}</h3>
-                        <p class="item-price">{{ item.product.price }} {{ config.get('CURRENCY', 'RUB') }}</p>
-                        {% if item.product.volume_ml %}
-                            <p class="item-volume">Объем: {{ item.product.volume_ml }} мл</p>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="item-quantity">
-                        <label>Количество:</label>
-                        <div class="quantity-controls">
-                            <button onclick="updateQuantity('{{ item.product.sku }}', {{ item.qty - 1 }})">-</button>
-                            <span class="quantity">{{ item.qty }}</span>
-                            <button onclick="updateQuantity('{{ item.product.sku }}', {{ item.qty + 1 }})">+</button>
+    <!--JS-->
+    <script src="{{ url_for('static', filename='js/notifications.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</head>
+<body>
+    <div class="container">
+
+        <!-- Header -->
+        <span class="cart-header">
+            <span><h1 class="color-1">Корзина</h1></span>
+            
+            <!--Кнопка закрытия корзины (Кнопка назад)-->
+            <button class="button-close">
+                <img src="{{ url_for('static', filename='img/icons/cross.svg') }}" alt="Закрыть">
+            </button>
+        </span>
+        
+        <div class="card-body">
+
+            <!-- Cart Items -->
+            {% if cart_items %}
+                <!-- ИСПРАВЛЕНО: Используем namespace для накопления суммы -->
+                {% set ns = namespace(total=0) %}
+                
+                <div class="cart-items">
+                    {% for item in cart_items %}
+                        <div class="cart-item" data-sku="{{ item.product.sku }}">
+                            <div class="item-image">
+                                {% if item.product.images %}
+                                    <img src="{{ item.product.images[0] }}" alt="{{ item.product.title }}">
+                                {% else %}
+                                    <div class="no-image">Нет фото</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="item-info">
+                                <h5>{{ item.product.title }}</h5>
+                                <p class="item-price">{{ item.product.price }} {{ config.get('CURRENCY', '₽') }}</p>
+                            </div>
+                            
+                            <button class="button-remove" onclick="removeFromCart('{{ item.product.sku }}')">
+                                <img src="{{ url_for('static', filename='img/icons/cross.svg') }}" alt="Удалить">
+                            </button>
                         </div>
+                        
+                        <!-- ИСПРАВЛЕНО: Правильное накопление суммы через namespace -->
+                        {% set ns.total = ns.total + (item.product.price * item.qty) %}
+                    {% endfor %}
+                </div>
+                
+                <!-- Cart Summary -->
+                <div class="cart-summary">
+                    <div class="summary-row">
+                        <span>Итого:</span>
+                        <span class="total-amount">{{ ns.total }} {{ config.get('CURRENCY', '₽') }}</span>
                     </div>
                     
-                    <div class="item-total">
-                        <span class="total-price">{{ item.total }} {{ config.get('CURRENCY', 'RUB') }}</span>
-                        <button class="btn-remove" onclick="removeFromCart('{{ item.product.sku }}')">Удалить</button>
-                    </div>
+                    <a href="{{ url_for('public.checkout') }}" class="btn-large-color1">
+                        Оформить заказ
+                    </a>
                 </div>
-                {% set total = total + item.total %}
-            {% endfor %}
+            {% else %}
+                <div class="empty-cart">
+                    <h2>Ваша корзина пуста</h2>
+                    <a href="{{ url_for('public.home') }}" class="btn-large-color1">Перейти в каталог</a>
+                </div>
+            {% endif %}
         </div>
-        
-        <div class="cart-summary">
-            <div class="summary-row">
-                <span>Итого:</span>
-                <span class="total-amount">{{ total }} {{ config.get('CURRENCY', 'RUB') }}</span>
-            </div>
-            <a href="{{ url_for('public.checkout') }}" class="btn btn-primary btn-large">
-                Оформить заказ
-            </a>
-            <a href="{{ url_for('public.catalog') }}" class="btn btn-outline">
-                Продолжить покупки
-            </a>
-        </div>
-    {% else %}
-        <div class="empty-cart">
-            <p>Ваша корзина пуста</p>
-            <a href="{{ url_for('public.catalog') }}" class="btn btn-primary">Перейти в каталог</a>
-        </div>
-    {% endif %}
-</div>
+    </div>
 
-<script>
-    function updateQuantity(sku, newQty) {
-        if (newQty < 1) {
-            removeFromCart(sku);
-            return;
-        }
-        
-        fetch('/cart/update', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                sku: sku,
-                qty: newQty
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.ok) {
-                location.reload(); // Простое обновление страницы
-            } else {
-                showNotification(data.error, 'error');
-            }
-        });
-    }
-    
-    function removeFromCart(sku) {
-        if (!confirm('Удалить товар из корзины?')) {
-            return;
-        }
-        
-        fetch('/cart/remove', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                sku: sku
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.ok) {
-                location.reload();
-                updateCartCounter();
-            } else {
-                showNotification(data.error, 'error');
-            }
-        });
-    }
-</script>
-{% endblock %}
+    <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
+</body>
+</html>

@@ -23,6 +23,13 @@ h3{
   font-weight: 400;
 }
 
+h5{
+  font-size: 20px;
+  line-height: 25px;
+  letter-spacing: 0px;
+  font-weight: 600;
+}
+
 p{
   font-size: 15px;
   line-height: 25px;

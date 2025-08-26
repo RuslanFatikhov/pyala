@@ -196,7 +196,12 @@ def remove_from_cart():
 def cart():
     """Страница корзины"""
     try:
+        # Отладочная информация
+        print(f"DEBUG: Session cart: {session.get('cart')}")
+        
         cart_items = _get_cart_items()
+        print(f"DEBUG: Cart items count: {len(cart_items)}")
+        
         return render_template('cart.html', cart_items=cart_items)
     except Exception as e:
         logging.error(f"Error loading cart: {e}")
@@ -296,6 +301,8 @@ def _get_cart_items():
                 'qty': qty,
                 'total': product['price'] * qty
             })
+            # Добавьте эту отладочную строку временно
+            print(f"DEBUG: SKU={sku}, Price={product['price']}, Qty={qty}, Total={product['price'] * qty}")
     
     return cart_items
 

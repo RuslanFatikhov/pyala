@@ -1,3 +1,8 @@
+button{
+    cursor: pointer;
+}
+
+
 /* Add to Cart Button */
 .add-to-cart-btn {
     width: 100%;
@@ -23,10 +28,52 @@
     line-height: 20px;
     letter-spacing: 2px;
     text-transform: uppercase;
+    text-decoration: none !important;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-large-color1:hover {
-    background-color: #e65c50;
+    background-color: var(--color-2);
+    color: var(--color-1);
+
+}
+
+
+.btn-large-color2{
+    background-color: var(--color-2);
+    color: var(--color-1);
+    height: 50px;
+    width: 100%;
+    border: none;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none !important;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-large-color5{
+    background-color: var(--color-5);
+    color: var(--color-3);
+    height: 50px;
+    width: 100%;
+    border: none;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none !important;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .tab-button {
@@ -45,4 +92,22 @@
 .tab-button.active {
     color: var(--color-1);
     border-bottom-color: var(--color-1);
+}
+
+.button-remove, .button-close{
+    background: none;
+    border: none;
+
+    min-width: 50px;
+    min-height: 50px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    transition: ease-in-out 0.01s;
+}
+
+.button-remove:hover{
+    background-color: var(--color-2);
 }
