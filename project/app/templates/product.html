@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.title }} - TEA CUP{% endblock %}
+
+{% block content %}
+
+<!--Mobile-->
+<div class="product_mobile">
+
+    <!--Product-header-->
+    <div class="product-header">
+        {% if product.category %}
+            <a href="{{ get_category_url(product.category) }}" class="product-category">
+                <img src="{{ url_for('static', filename='img/icons/left-arrow.svg') }}" alt="arrow">
+                <p>{{ product.category }}</p>
+            </a>
+        {% endif %}
+        <h1 class="product-title">{{ product.title }}</h1>
+    </div>
+        
+    <!-- Левая колонка: изображения -->
+    <div class="product-images">
+        {% if product.images and product.images|length > 0 %}
+            <!-- Главное изображение -->
+            <div class="main-image">
+                <img id="main-product-image" 
+                     src="{{ product.images[0] }}" 
+                     alt="{{ product.title }}"
+                     onerror="this.src='/static/img/no-image.jpg'">
+            </div>
+
+            <!-- Миниатюры (если больше одного изображения) -->
+            {% if product.images|length > 1 %}
+                <div class="image-thumbnails">
+                    {% for image in product.images %}
+                        <img src="{{ image }}" 
+                             alt="{{ product.title }}" 
+                             class="thumbnail {% if loop.first %}active{% endif %}"
+                             onclick="changeMainImage('{{ image }}', this)"
+                             onerror="this.style.display='none'">
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% else %}
+            <!-- Заглушка если нет изображений -->
+            <div class="no-image-large">
+                <span>Фото скоро будет</span>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Правая колонка: информация о товаре -->
+    <div class="product-info">
+        <!-- Цена -->
+        <span class="price-section">
+            {% if product.old_price %}
+                <span class="old-price-large">{{ product.old_price }} ₽</span>
+            {% endif %}
+            <span class="current-price-large">{{ product.price }} ₽</span>
+            {% if product.old_price %}
+                {% set discount = ((product.old_price - product.price) / product.old_price * 100) | round %}
+                <span class="discount-badge">-{{ discount }}%</span>
+            {% endif %}
+        </span>
+
+        <div class="product-tabs">
+            <div class="tabs-nav">
+                <button class="tab-button active" onclick="showTabMobile('description')">Описание</button>
+                <button class="tab-button" onclick="showTabMobile('specs')">Характеристики</button>
+            </div>
+            
+            <div class="tabs-content">
+                <div id="description-tab-mobile" class="tab-content active">
+                    <h3 class="color-1">О товаре</h3>
+                    <p class="color-1">{{ product.description or 'Подробное описание скоро появится.' }}</p>
+                </div>
+                
+                <div id="specs-tab-mobile" class="tab-content">
+                    <h3>Технические характеристики</h3>
+                    <table class="specs-table">
+                        <tr>
+                            <td>Артикул</td>
+                            <td>{{ product.sku }}</td>
+                        </tr>
+                        {% if product.volume_ml %}
+                        <tr>
+                            <td>Объем</td>
+                            <td>{{ product.volume_ml }} мл</td>
+                        </tr>
+                        {% endif %}
+                        {% if product.color %}
+                        <tr>
+                            <td>Цвет</td>
+                            <td>{{ product.color }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <td>Материал</td>
+                            <td>Керамика</td>
+                        </tr>
+                        <tr>
+                            <td>Происхождение</td>
+                            <td>Ручная работа</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Добавление в корзину -->
+        <div class="add-to-cart-section">
+            {% if product.stock > 0 %}
+                <button class="btn-large-color1" 
+                        onclick="addToCartFromPDP('{{ product.sku }}')">
+                    Добавить в корзину
+                </button>
+            {% else %}
+                <div class="stock-status out-of-stock">
+                    <span class="stock-icon">✗</span>
+                    <span>Нет в наличии</span>
+                </div>
+                
+                <button class="btn btn-disabled btn-large" disabled>
+                    Товара нет в наличии
+                </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+
+<!--Desktop-->
+<div class="product_desktop">
+        
+    <!-- Левая колонка: изображения -->
+    <div class="product-images">
+        {% if product.images and product.images|length > 0 %}
+            <!-- Главное изображение -->
+            <div class="main-image">
+                <img id="main-product-image" 
+                     src="{{ product.images[0] }}" 
+                     alt="{{ product.title }}"
+                     onerror="this.src='/static/img/no-image.jpg'">
+            </div>
+
+            <!-- Миниатюры (если больше одного изображения) -->
+            {% if product.images|length > 1 %}
+                <div class="image-thumbnails">
+                    {% for image in product.images %}
+                        <img src="{{ image }}" 
+                             alt="{{ product.title }}" 
+                             class="thumbnail {% if loop.first %}active{% endif %}"
+                             onclick="changeMainImage('{{ image }}', this)"
+                             onerror="this.style.display='none'">
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% else %}
+            <!-- Заглушка если нет изображений -->
+            <div class="no-image-large">
+                <span>Фото скоро будет</span>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Правая колонка: информация о товаре -->
+    <div class="product-info">
+
+        <!--Product-header-->
+        <div class="product-header">
+            {% if product.category %}
+                <a href="{{ get_category_url(product.category) }}" class="product-category">
+                    <img src="{{ url_for('static', filename='img/icons/left-arrow.svg') }}" alt="arrow">
+                    <p>{{ product.category }}</p>
+                </a>
+            {% endif %}
+            <h1 class="product-title">{{ product.title }}</h1>
+        </div>
+
+        <!-- Цена -->
+        <span class="price-section">
+            {% if product.old_price %}
+                <span class="old-price-large">{{ product.old_price }} ₽</span>
+            {% endif %}
+            <span class="current-price-large">{{ product.price }} ₽</span>
+            {% if product.old_price %}
+                {% set discount = ((product.old_price - product.price) / product.old_price * 100) | round %}
+                <span class="discount-badge">-{{ discount }}%</span>
+            {% endif %}
+        </span>
+
+        <!-- Добавление в корзину -->
+        <div class="add-to-cart-section-desktop">
+            {% if product.stock > 0 %}
+                <button class="btn-large-color1" 
+                        onclick="addToCartFromPDP('{{ product.sku }}')">
+                    Добавить в корзину
+                </button>
+            {% else %}
+                <div class="stock-status out-of-stock">
+                    <span class="stock-icon">✗</span>
+                    <span>Нет в наличии</span>
+                </div>
+                
+                <button class="btn btn-disabled btn-large" disabled>
+                    Товара нет в наличии
+                </button>
+            {% endif %}
+        </div>
+
+        <div class="product-tabs">
+            <div class="tabs-nav">
+                <button class="tab-button active" onclick="showTabDesktop('description')">Описание</button>
+                <button class="tab-button" onclick="showTabDesktop('specs')">Характеристики</button>
+            </div>
+            
+            <div class="tabs-content">
+                <div id="description-tab-desktop" class="tab-content active">
+                    <h3 class="color-1">О товаре</h3>
+                    <p class="color-1">{{ product.description or 'Подробное описание скоро появится.' }}</p>
+                </div>
+                
+                <div id="specs-tab-desktop" class="tab-content">
+                    <h3>Технические характеристики</h3>
+                    <table class="specs-table">
+                        <tr>
+                            <td>Артикул</td>
+                            <td>{{ product.sku }}</td>
+                        </tr>
+                        {% if product.volume_ml %}
+                        <tr>
+                            <td>Объем</td>
+                            <td>{{ product.volume_ml }} мл</td>
+                        </tr>
+                        {% endif %}
+                        {% if product.color %}
+                        <tr>
+                            <td>Цвет</td>
+                            <td>{{ product.color }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <td>Материал</td>
+                            <td>Керамика</td>
+                        </tr>
+                        <tr>
+                            <td>Происхождение</td>
+                            <td>Ручная работа</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/product.js') }}"></script>
+{% endblock %}

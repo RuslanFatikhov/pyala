@@ -47,15 +47,32 @@ header nav{
 }
 
 main{
-    padding: 20px;
     width: 100%;
+    height: auto;
     margin-bottom: 100px;
 }
 
 .hero{
     width: 100%;
-    height: 200px;
-    background-color: red;
+    padding: 10px;
+    display: flex;
+    flex-direction: row;    
+    gap: 10px;
+}
+
+
+.category-hero{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background-color: var(--color-4);
+    padding: 20px 20px 40px 20px;
+}
+
+
+.hero img{
+    width: 100%;
+    height: auto;
 }
 
 footer{
@@ -181,12 +198,35 @@ footer a{
   background-color: var(--color-3);
 }
 
+.vstack{
+    display: flex;
+    flex-direction: column;
+}
+
+/* Notification */
+
+.aler{
+    position: absolute;
+    left: 0px;
+    top: 0px;
+}
+
+.alert-success{
+
+}
+
+.notification{
+
+}
+
+
 
 /* Media */
 
-@media screen {
+@media screen and (max-width: 768px) {
     footer{
         flex-direction: column;
+        
     }
 
     .nav-links{

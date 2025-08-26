@@ -1,22 +1,25 @@
 {% extends "base.html" %}
-{% block title %}Главная - Керамические пиалы{% endblock %}
-{% block content %}
-<!--Hero-->
-<div class="hero">
-  <a href="{{ url_for('public.catalog') }}" class="hero-banner">
-    <img src="{{ url_for('static', filename='img/banner-catalog.jpg') }}" alt="Керамические пиалы" class="hero-image">
-  </a>
-  <a href="{{ url_for('public.catalog') }}" class="hero-banner">
-    <img src="{{ url_for('static', filename='img/banner-delivery.jpg') }}" alt="Керамические пиалы" class="hero-image">
-  </a>
-</div>
 
-<!-- Featured Products Section -->
-<section class="featured-products">
-  <div class="container">
+{% block title %}Пиалки - Керамические пиалы{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero секция для пиалок -->
+    <div class="category-hero">
+        <h1>Керамические пиалки</h1>
+        <p>Уникальные пиалки ручной работы для настоящих ценителей чайной церемонии</p>
+    
+    </div>
+
+
+
+
+
+
+    <!-- Товары -->
     <div class="products-grid">
-      {% for product in products %}
-      <div class="product-card">
+        {% for product in products %}
+            <div class="product-card">
         <a href="{{ url_for('public.product_detail', sku=product.sku) }}">
           {% if product.images and product.images|length > 0 %}
           <!-- DEBUG: Показываем что приходит в product.images[0] -->
@@ -60,8 +63,17 @@
           </div>
         </a>
       </div>
-      {% endfor %}
+        {% else %}
+            <div class="no-products">
+                <h3>Пиалки не найдены</h3>
+                <p>Похоже они закончились</p>
+            </div>
+        {% endfor %}
     </div>
-  </div>
-</section>
+    
+
+
+</div>
+
+
 {% endblock %}

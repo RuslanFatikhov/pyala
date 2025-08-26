@@ -10,45 +10,46 @@
     <link href="{{ url_for('static', filename='css/typo.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/colors.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/product.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/button.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/notifications.css') }}" rel="stylesheet">
 
     <!--JS-->
+    <script src="{{ url_for('static', filename='js/notifications.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
     
-    <!-- Аналитика -->
-
+    
 </head>
 <body>
 
     <!--HEADER-->
     <header>
-
         <nav>
-
-
             <div class="nav-brand">
                 <a href="{{ url_for('public.home') }}">TEA CUP</a>
             </div>
 
             <div class="nav-links">
-                <a href="{{ url_for('public.catalog') }}"><h3>ПИАЛКИ</h3></a>
-                <a href="{{ url_for('public.catalog') }}"><h3>ЧАШКИ</h3></a>
-                <a href="{{ url_for('public.catalog') }}"><h3>ЧАЙНИКИ</h3></a>
-
-                
+                <a href="/pialki"><h3>ПИАЛКИ</h3></a>
+                <a href="/chashki"><h3>ЧАШКИ</h3></a>
+                <a href="/chainiki"><h3>ЧАЙНИКИ</h3></a>
             </div>
 
             <a href="{{ url_for('public.cart') }}" class="cart-link">
-                    Корзина <span id="cart-count">(0)</span>
+                Корзина <span id="cart-count">(0)</span>
             </a>
         </nav>
     </header>
 
     <main class="main">
+        <!-- Flash Messages (Server-side уведомления) -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="container">
+                <div class="flash-messages-container">
                     {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                        <div class="alert alert-{{ category }} flash-message">
+                            {{ message }}
+                        </div>
                     {% endfor %}
                 </div>
             {% endif %}
@@ -57,10 +58,8 @@
         {% block content %}{% endblock %}
     </main>
 
-
     <!--FOOTER-->
     <footer class="footer">
-        
         <!--Catalog-->
         <span class="column">
             <a href=""><p>ПИАЛКИ</p></a>
@@ -76,7 +75,7 @@
             <a href=""><p>FAQ</p></a>
         </span>
 
-        <!--C-->
+        <!--Contacts-->
         <span class="column">
             <a href=""><p>О НАС</p></a>
             <a href=""><p>КОНТАКТЫ</p></a> 

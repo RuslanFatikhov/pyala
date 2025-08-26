@@ -1,0 +1,13 @@
+.alert{
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+    width: calc(100% - 40px);
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.15s ease;
+    padding: 20px;
+    background-color: var(--color-1);
+    color: var(--color-3);
+}

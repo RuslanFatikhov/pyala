@@ -16,11 +16,24 @@ notification_service = NotificationService()
 def home():
     """Главная страница с новинками"""
     try:
-        featured_products = product_service.get_featured_products(limit=6)
+        # Вариант 1: Последние 4 добавленных товара (по дате)
+        featured_products = product_service.get_featured_products(limit=4)
+        
+        # Вариант 2: Товары за последние 30 дней
+        # featured_products = product_service.get_new_products(days=30, limit=4)
+        
+        # Вариант 3: Товары за последние 60 дней
+        # featured_products = product_service.get_new_products(days=60, limit=4)
+        
+        # Вариант 4: Конкретные SKU
+        # featured_skus = ['PIA-004', 'PIA-005', 'PIA-006', 'SET-001']
+        # featured_products = product_service.get_products_by_skus(featured_skus)
+        
         return render_template('home.html', products=featured_products)
     except Exception as e:
         logging.error(f"Error loading home page: {e}")
         return render_template('errors/500.html'), 500
+
 
 @public_bp.route('/catalog')
 def catalog():
@@ -94,7 +107,7 @@ def add_to_cart():
 
         # Проверка наличия
         if product['stock'] < qty:
-            return jsonify({'error': 'Insufficient stock'}), 400
+            return jsonify({'error': 'Товар закончился'}), 400
 
         # Добавление в корзину (session)
         if 'cart' not in session:
@@ -104,7 +117,7 @@ def add_to_cart():
         new_qty = current_qty + qty
 
         if product['stock'] < new_qty:
-            return jsonify({'error': 'Insufficient stock'}), 400
+            return jsonify({'error': 'Товар закончился'}), 400
 
         session['cart'][sku] = new_qty
         session.modified = True
@@ -142,7 +155,7 @@ def update_cart():
             if product and product['stock'] >= qty:
                 session['cart'][sku] = qty
             else:
-                return jsonify({'error': 'Insufficient stock'}), 400
+                return jsonify({'error': 'Товар закончился'}), 400
 
         session.modified = True
         cart_summary = _get_cart_summary()
@@ -286,3 +299,42 @@ def _get_cart_items():
     
     return cart_items
 
+@public_bp.route('/pialki')
+def pialki():
+    """Страница категории Пиалки - только товары с SKU начинающимися на PIA"""
+    try:
+        # Получение параметров фильтрации
+        q = request.args.get('q', '')
+        price_min = request.args.get('price_min', type=int)
+        price_max = request.args.get('price_max', type=int)
+        sort_by = request.args.get('sort', 'default')  # default, price_asc, price_desc, name
+        page = request.args.get('page', 1, type=int)
+        per_page = 12
+
+        # Получение товаров пиалок (SKU начинается с PIA)
+        products, total_pages = product_service.get_pialki_products(
+            query=q,
+            price_min=price_min,
+            price_max=price_max,
+            sort_by=sort_by,
+            page=page,
+            per_page=per_page
+        )
+
+        # Получение статистики по пиалкам
+        pialki_stats = product_service.get_pialki_stats()
+
+        return render_template('pialki.html', 
+                             products=products,
+                             current_page=page,
+                             total_pages=total_pages,
+                             pialki_stats=pialki_stats,
+                             filters={
+                                 'q': q,
+                                 'price_min': price_min,
+                                 'price_max': price_max,
+                                 'sort': sort_by
+                             })
+    except Exception as e:
+        logging.error(f"Error loading pialki page: {e}")
+        return render_template('errors/500.html'), 500

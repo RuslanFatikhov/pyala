@@ -125,6 +125,37 @@ class ProductService:
             print(f"  - SKU: {p.get('sku')}, Title: {p.get('title')}")
         return result
     
+    def get_new_products(self, days: int = 30, limit: int = 4) -> List[Dict]:
+        """Получение новых продуктов"""
+        from datetime import datetime, timedelta
+        
+        cutoff_date = datetime.now() - timedelta(days=days)
+        products = self.get_all_products()
+        
+        new_products = []
+        for product in products:
+            date_added = product.get('date_added', '')
+            if date_added:
+                try:
+                    product_date = datetime.strptime(date_added, '%Y-%m-%d')
+                    if product_date >= cutoff_date:
+                        new_products.append(product)
+                except ValueError:
+                    continue
+        
+        # Сортируем по дате добавления (новые сначала)
+        new_products.sort(key=lambda x: x.get('date_added', ''), reverse=True)
+        return new_products[:limit]
+    
+    def get_products_by_skus(self, skus: List[str]) -> List[Dict]:
+        """Получение продуктов по списку SKU"""
+        products = []
+        for sku in skus:
+            product = self.get_product_by_sku(sku)
+            if product:
+                products.append(product)
+        return products
+    
     def get_filtered_products(self, category: str = '', query: str = '', 
                             price_min: Optional[int] = None, price_max: Optional[int] = None,
                             page: int = 1, per_page: int = 12) -> Tuple[List[Dict], int]:
@@ -165,3 +196,86 @@ class ProductService:
     def get_active_products_count(self) -> int:
         """Количество активных продуктов"""
         return len(self.get_all_products())
+    
+    def get_pialki_products(self, query: str = '', price_min: Optional[int] = None, 
+                           price_max: Optional[int] = None, sort_by: str = 'default',
+                           page: int = 1, per_page: int = 12) -> Tuple[List[Dict], int]:
+        """Получение товаров пиалок (SKU начинается с PIA) с фильтрами и сортировкой"""
+        with self._lock:
+            # Фильтрация по SKU начинающемуся с PIA
+            products = [p for p in self._cache.values() 
+                       if p['is_active'] and p['sku'].startswith('PIA')]
+            
+            print(f"🔍 DEBUG: Найдено пиалок: {len(products)}")
+            for p in products:
+                print(f"  - {p['sku']}: {p['title']}")
+            
+            # Фильтрация по поиску
+            if query:
+                query_lower = query.lower()
+                products = [p for p in products 
+                           if query_lower in p['title'].lower() or 
+                              query_lower in p['description'].lower() or
+                              query_lower in p['color'].lower()]
+            
+            # Фильтрация по цене
+            if price_min is not None:
+                products = [p for p in products if p['price'] >= price_min]
+            
+            if price_max is not None:
+                products = [p for p in products if p['price'] <= price_max]
+            
+            # Сортировка
+            if sort_by == 'price_asc':
+                products.sort(key=lambda x: x['price'])
+            elif sort_by == 'price_desc':
+                products.sort(key=lambda x: x['price'], reverse=True)
+            elif sort_by == 'name':
+                products.sort(key=lambda x: x['title'])
+            elif sort_by == 'volume':
+                products.sort(key=lambda x: int(x['volume_ml']) if x['volume_ml'].isdigit() else 0)
+            # default - без сортировки, в порядке как в CSV
+            
+            # Пагинация
+            total = len(products)
+            total_pages = (total + per_page - 1) // per_page if total > 0 else 1
+            
+            start = (page - 1) * per_page
+            end = start + per_page
+            products = products[start:end]
+            
+            return products, total_pages
+
+    def get_pialki_stats(self) -> Dict:
+        """Получение статистики по пиалкам"""
+        with self._lock:
+            pialki = [p for p in self._cache.values() 
+                     if p['is_active'] and p['sku'].startswith('PIA')]
+            
+            if not pialki:
+                return {
+                    'total_count': 0,
+                    'price_range': {'min': 0, 'max': 0},
+                    'volume_range': {'min': 0, 'max': 0},
+                    'colors': [],
+                    'in_stock_count': 0
+                }
+            
+            prices = [p['price'] for p in pialki]
+            volumes = [int(p['volume_ml']) for p in pialki if p['volume_ml'].isdigit()]
+            colors = list(set([p['color'] for p in pialki if p['color']]))
+            in_stock = [p for p in pialki if p['stock'] > 0]
+            
+            return {
+                'total_count': len(pialki),
+                'price_range': {
+                    'min': min(prices) if prices else 0,
+                    'max': max(prices) if prices else 0
+                },
+                'volume_range': {
+                    'min': min(volumes) if volumes else 0,
+                    'max': max(volumes) if volumes else 0
+                },
+                'colors': sorted(colors),
+                'in_stock_count': len(in_stock)
+            }
