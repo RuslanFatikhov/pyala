@@ -12,9 +12,15 @@ a:hover{
     text-decoration: underline;
 }
 
+
 header{
+    position: fixed;
+    left: 0px;
+    top: 0px;
+    width: 100%;
     background-color: var(--color-3);
     border-bottom: 1px solid var(--color-2);
+    z-index: 100;
 }
 
 header nav{
@@ -34,6 +40,11 @@ header nav{
     gap: 20px;
 }
 
+.nav-brand img{
+    height: 30px;
+    width: auto;
+}
+
 .nav-links a, .cart-link{
     display: flex;
     align-items: center;
@@ -46,10 +57,11 @@ header nav{
     filter: drop-shadow(0 1px 0px var(--color-1));
 }
 
-main{
+.main{
     width: 100%;
     height: auto;
     margin-bottom: 100px;
+    margin-top: 50px;
 }
 
 .hero{
@@ -166,12 +178,38 @@ footer a{
 }
 
 .old-price{
-    font-size: 18px;
+    font-size: 15px;
+    line-height: 20px;
+    color: var(--color-1);
+    text-decoration: line-through;
+    background-color: var(--color-6);
+    padding: 5px;
+}
+
+.old-price1{
+    font-size: 15px;
     line-height: 20px;
     color: var(--color-1);
     text-decoration: line-through;
     opacity: 0.5;
 }
+
+.price-section{
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.discount-badge{
+    font-size: 15px;
+    line-height: 20px;
+    background-color: var(--color-6);
+    color: var(--color-1);
+    padding: 5px 10px;
+}
+
+
 
 .product-image{
     width: 100%;
@@ -203,21 +241,34 @@ footer a{
     flex-direction: column;
 }
 
-/* Notification */
 
-.aler{
-    position: absolute;
+.page-header{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed;
     left: 0px;
     top: 0px;
+    padding: 20px;
+    width: 100%;
+    border-bottom: 1px solid var(--color-1);
+    height: 80px;
+    background-color: var(--color-3);
 }
 
-.alert-success{
 
+.page-header span{
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
 }
 
-.notification{
-
+.hstack{
+    display: flex;
+    flex-direction: row;
 }
+
 
 
 

@@ -1,23 +1,4 @@
-.cart-header{
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    position: fixed;
-    left: 0px;
-    top: 0px;
-    padding: 20px;
-    width: 100%;
-    border-bottom: 1px solid var(--color-1);
-    height: 80px;
-    background-color: var(--color-3);
-}
 
-.card-header span{
-    display: flex;
-    flex-direction: row;
-    gap: 5px;
-}
 
 .cart-items{
     margin-bottom: 20px;
@@ -80,9 +61,84 @@
     padding: 50px;
 }
 
+.checkout-layout{
+    margin-top: 80px !important;
+    display: flex;
+    flex-direction: row;
+}
+
+.checkout-form{
+    padding: 20px;
+}
+
+.form-group{
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 20px;
+}
+
+input{
+    display: flex;
+    width: 100%;
+    height: 40px;
+    border: 1px solid var(--color-2);
+    background-color: var(--color-3);
+    padding: 5px 10px;
+}
+
+textarea{
+    padding: 10px;
+    display: flex;
+    width: 100%;
+    min-height: 100px;
+    border: 1px solid var(--color-2);
+    background-color: var(--color-3);
+}
+
+.order-summary{
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.order-summary span{
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.summary-item{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--color-2);
+}
+
+.delivery-info{
+    padding: 20px;
+    background-color: var(--color-4);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.delivery-info ul{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+
 
 @media screen  and (max-width: 800px) {
     .card-body{
+        flex-direction: column;
+    }
+
+    .checkout-layout{
         flex-direction: column;
     }
     

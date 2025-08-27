@@ -1,0 +1,64 @@
+/* Стили для блоков категорий - добавить в main.css */
+
+.category-section {
+    margin-bottom: 60px;
+}
+
+.catalog-header{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--color-2);
+}
+
+.category-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 20px;
+}
+
+.category-header h2{
+    text-transform: uppercase;
+}
+
+.view-all-link {
+    font-size: 16px;
+    line-height: 20px;
+    color: var(--color-1);
+    text-decoration: none !important;
+    padding: 10px 20px;
+    border: 1px solid var(--color-2);
+    transition: all 0.2s ease;
+}
+
+.view-all-link:hover {
+    background-color: var(--color-1);
+    color: var(--color-3);
+    text-decoration: none !important;
+}
+
+/* Адаптация для мобильных устройств */
+@media screen and (max-width: 768px) {
+    .category-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .category-header h2 {
+        font-size: 24px;
+        line-height: 30px;
+    }
+    
+    .view-all-link {
+        align-self: flex-end;
+        font-size: 14px;
+        padding: 8px 16px;
+    }
+    
+    .category-section {
+        margin-bottom: 40px;
+    }
+}

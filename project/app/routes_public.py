@@ -1,4 +1,3 @@
-### app/routes_public.py
 from flask import Blueprint, render_template, request, session, jsonify, redirect, url_for, flash
 from .services.products import ProductService
 from .services.orders import OrderService
@@ -37,7 +36,7 @@ def home():
 
 @public_bp.route('/catalog')
 def catalog():
-    """Каталог с фильтрами и поиском"""
+    """Каталог с фильтрами и поиском, группировкой по категориям"""
     try:
         # Получение параметров фильтрации
         category = request.args.get('category', '')
@@ -47,18 +46,24 @@ def catalog():
         page = request.args.get('page', 1, type=int)
         per_page = 12
 
-        # Получение продуктов с фильтрами
-        products, total_pages = product_service.get_filtered_products(
-            category=category,
-            query=q,
-            price_min=price_min,
-            price_max=price_max,
-            page=page,
-            per_page=per_page
-        )
-
         # Получение доступных категорий для фильтра
         categories = product_service.get_categories()
+
+        if category or q or price_min or price_max:
+            # Если есть фильтры - показываем отфильтрованные товары с пагинацией
+            products, total_pages = product_service.get_filtered_products(
+                category=category,
+                query=q,
+                price_min=price_min,
+                price_max=price_max,
+                page=page,
+                per_page=per_page
+            )
+        else:
+            # Если фильтров нет - показываем все товары для группировки по категориям
+            all_products = product_service.get_all_products()
+            products = all_products
+            total_pages = 1  # Без пагинации при группировке
 
         return render_template('catalog.html', 
                              products=products,
@@ -91,7 +96,7 @@ def product_detail(sku):
 
 @public_bp.route('/cart/add', methods=['POST'])
 def add_to_cart():
-    """Добавление товара в корзину"""
+    """Добавление товара в корзину БЕЗ проверки stock"""
     try:
         data = request.get_json()
         sku = data.get('sku')
@@ -105,9 +110,7 @@ def add_to_cart():
         if not product or not product['is_active']:
             return jsonify({'error': 'Product not found or inactive'}), 404
 
-        # Проверка наличия
-        if product['stock'] < qty:
-            return jsonify({'error': 'Товар закончился'}), 400
+        # УБРАНА проверка наличия stock
 
         # Добавление в корзину (session)
         if 'cart' not in session:
@@ -116,8 +119,7 @@ def add_to_cart():
         current_qty = session['cart'].get(sku, 0)
         new_qty = current_qty + qty
 
-        if product['stock'] < new_qty:
-            return jsonify({'error': 'Товар закончился'}), 400
+        # УБРАНА проверка stock при обновлении количества
 
         session['cart'][sku] = new_qty
         session.modified = True
@@ -135,7 +137,7 @@ def add_to_cart():
 
 @public_bp.route('/cart/update', methods=['POST'])
 def update_cart():
-    """Обновление количества товара в корзине"""
+    """Обновление количества товара в корзине БЕЗ проверки stock"""
     try:
         data = request.get_json()
         sku = data.get('sku')
@@ -150,12 +152,12 @@ def update_cart():
         if qty <= 0:
             session['cart'].pop(sku, None)
         else:
-            # Проверка наличия
+            # Проверяем только существование продукта, БЕЗ проверки stock
             product = product_service.get_product_by_sku(sku)
-            if product and product['stock'] >= qty:
+            if product:
                 session['cart'][sku] = qty
             else:
-                return jsonify({'error': 'Товар закончился'}), 400
+                return jsonify({'error': 'Товар не найден'}), 400
 
         session.modified = True
         cart_summary = _get_cart_summary()
@@ -288,13 +290,14 @@ def _get_cart_summary():
     return {'count': count, 'total': total}
 
 def _get_cart_items():
-    """Получение товаров корзины с деталями"""
+    """Получение товаров корзины с деталями БЕЗ проверки stock"""
     if not session.get('cart'):
         return []
     
     cart_items = []
     for sku, qty in session['cart'].items():
         product = product_service.get_product_by_sku(sku)
+        # УБРАНА проверка stock - показываем все активные товары
         if product and product['is_active']:
             cart_items.append({
                 'product': product,

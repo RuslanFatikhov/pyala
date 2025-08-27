@@ -1,120 +1,152 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Корзина - Керамические пиалы</title>
 
-{% block title %}Оформление заказа - Керамические пиалы{% endblock %}
+    <!--CSS-->
+    <link href="{{ url_for('static', filename='css/reset.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/typo.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/colors.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/product.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/button.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/notifications.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/cart.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/modal.css') }}" rel="stylesheet">
 
-{% block content %}
-<div class="container">
-    <h1>Оформление заказа</h1>
-    
-    <div class="checkout-layout">
-        <div class="checkout-form">
-            <form method="POST">
-                <div class="form-group">
-                    <label for="name">Имя *</label>
-                    <input type="text" id="name" name="name" 
-                           value="{{ form_data.name if form_data else '' }}" 
-                           required maxlength="60">
-                    {% if errors and errors.name %}
-                        <div class="error">{{ errors.name }}</div>
-                    {% endif %}
-                </div>
-                
-                <div class="form-group">
-                    <label for="phone">Телефон *</label>
-                    <input type="tel" id="phone" name="phone" 
-                           value="{{ form_data.phone if form_data else '' }}" 
-                           required placeholder="+7 (000) 000-00-00">
-                    {% if errors and errors.phone %}
-                        <div class="error">{{ errors.phone }}</div>
-                    {% endif %}
-                </div>
-                
-                <div class="form-group">
-                    <label for="city">Город *</label>
-                    <input type="text" id="city" name="city" 
-                           value="{{ form_data.city if form_data else '' }}" 
-                           required maxlength="100">
-                    {% if errors and errors.city %}
-                        <div class="error">{{ errors.city }}</div>
-                    {% endif %}
-                </div>
-                
-                <div class="form-group">
-                    <label for="address">Адрес доставки *</label>
-                    <textarea id="address" name="address" 
-                              required maxlength="200" rows="3">{{ form_data.address if form_data else '' }}</textarea>
-                    {% if errors and errors.address %}
-                        <div class="error">{{ errors.address }}</div>
-                    {% endif %}
-                </div>
-                
-                <div class="form-group">
-                    <label for="comment">Комментарий к заказу</label>
-                    <textarea id="comment" name="comment" 
-                              maxlength="500" rows="3" placeholder="Особые пожелания, время доставки...">{{ form_data.comment if form_data else '' }}</textarea>
-                    {% if errors and errors.comment %}
-                        <div class="error">{{ errors.comment }}</div>
-                    {% endif %}
-                </div>
-                
-                <button type="submit" class="btn btn-primary btn-large">
-                    Подтвердить заказ
-                </button>
-            </form>
-        </div>
-        
-        <div class="order-summary">
-            <h3>Ваш заказ</h3>
-            {% set total = 0 %}
-            {% for item in cart_items %}
-                <div class="summary-item">
-                    <span class="item-name">{{ item.product.title }}</span>
-                    <span class="item-qty">x{{ item.qty }}</span>
-                    <span class="item-price">{{ item.total }} {{ config.get('CURRENCY', 'RUB') }}</span>
-                </div>
-                {% set total = total + item.total %}
-            {% endfor %}
+    <!--JS-->
+    <script src="{{ url_for('static', filename='js/notifications.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <span class="page-header">
+            <span><h1 class="color-1">Оформление</h1></span>
             
-            <div class="summary-total">
-                <strong>Итого: {{ total }} {{ config.get('CURRENCY', 'RUB') }}</strong>
-            </div>
+            <!--Кнопка закрытия корзины (Кнопка назад)-->
+            <a class="button-close" href="{{ url_for('public.home') }}">
+                <img src="{{ url_for('static', filename='img/icons/cross.svg') }}" alt="Закрыть">
+            </a>
+        </span>
             
-            <div class="delivery-info">
-                <h4>Информация о доставке</h4>
-                <ul>
-                    <li>Доставка 3-7 рабочих дней</li>
-                    <li>Бесплатная доставка от 5000 {{ config.get('CURRENCY', 'RUB') }}</li>
-                    <li>Оплата при получении</li>
-                </ul>
-            </div>
+        <div class="main checkout-layout">
+                <div class="checkout-form">
+                    <form method="POST">
+                        <div class="form-group">
+                            <label for="name">Имя *</label>
+                            <input type="text" id="name" name="name" 
+                                value="{{ form_data.name if form_data else '' }}" 
+                                required maxlength="60">
+                            {% if errors and errors.name %}
+                                <div class="error">{{ errors.name }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone">Телефон *</label>
+                            <input type="tel" id="phone" name="phone" 
+                                value="{{ form_data.phone if form_data else '' }}" 
+                                required placeholder="+7 (000) 000-00-00">
+                            {% if errors and errors.phone %}
+                                <div class="error">{{ errors.phone }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="city">Город *</label>
+                            <input type="text" id="city" name="city" 
+                                value="{{ form_data.city if form_data else '' }}" 
+                                required maxlength="100">
+                            {% if errors and errors.city %}
+                                <div class="error">{{ errors.city }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="address">Адрес доставки *</label>
+                            <textarea id="address" name="address" 
+                                    required maxlength="200" rows="3">{{ form_data.address if form_data else '' }}</textarea>
+                            {% if errors and errors.address %}
+                                <div class="error">{{ errors.address }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="comment">Комментарий к заказу</label>
+                            <textarea id="comment" name="comment" 
+                                    maxlength="500" rows="3" placeholder="Особые пожелания, время доставки...">{{ form_data.comment if form_data else '' }}</textarea>
+                            {% if errors and errors.comment %}
+                                <div class="error">{{ errors.comment }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <button type="submit" class="btn-large-color1">
+                            Подтвердить заказ
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="order-summary">
+                    <span>
+                        <h3 class="color-1">Ваш заказ</h3>
+                        {% set ns = namespace(total=0) %}
+                        {% for item in cart_items %}
+                        <div class="summary-item">
+                            <div class="hstack">
+                                <span class="item-name">{{ item.product.title }}</span>
+                                <!--span class="item-qty">x{{ item.qty }}</span-->
+                            </div>
+
+                            <span class="item-price">{{ item.total }} {{ config.get('CURRENCY', 'RUB') }}</span>
+                        </div>
+                        {% set ns.total = ns.total + item.total %}
+                        {% endfor %}
+
+                        <div class="summary-total">
+                        <strong>Итого: {{ ns.total }} {{ config.get('CURRENCY', 'RUB') }}</strong>
+                        </div>
+                    </span>
+                    
+                    <div class="delivery-info">
+                        <h3 class="color-1">Информация о доставке</h3>
+                        <ul class="color-1">
+                            <li>Доставка 3-7 рабочих дней</li>
+                            <li>Бесплатная доставка от 5000 {{ config.get('CURRENCY', 'RUB') }}</li>
+                            <li>Оплата при получении</li>
+                        </ul>
+                    </div>
+                </div>
         </div>
     </div>
-</div>
 
-<script>
-    // Аналитика: начало оформления заказа
-    gtag && gtag('event', 'begin_checkout', {
-        currency: '{{ config.get("CURRENCY", "RUB") }}',
-        value: {{ cart_items|sum(attribute='total') }},
-        items: [
-            {% for item in cart_items %}
-            {
-                item_id: '{{ item.product.sku }}',
-                item_name: '{{ item.product.title }}',
-                category: '{{ item.product.category }}',
-                price: {{ item.product.price }},
-                quantity: {{ item.qty }}
-            }{% if not loop.last %},{% endif %}
-            {% endfor %}
-        ]
-    });
-
-    // Аналитика при отправке формы
-    document.querySelector('form').addEventListener('submit', function() {
-        gtag && gtag('event', 'purchase_submit', {
+    <script>
+        // Аналитика: начало оформления заказа
+        gtag && gtag('event', 'begin_checkout', {
             currency: '{{ config.get("CURRENCY", "RUB") }}',
-            value: {{ cart_items|sum(attribute='total') }}
+            value: {{ cart_items|sum(attribute='total') }},
+            items: [
+                {% for item in cart_items %}
+                {
+                    item_id: '{{ item.product.sku }}',
+                    item_name: '{{ item.product.title }}',
+                    category: '{{ item.product.category }}',
+                    price: {{ item.product.price }},
+                    quantity: {{ item.qty }}
+                }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ]
         });
-    });
-</script>
-{% endblock %}
+
+        // Аналитика при отправке формы
+        document.querySelector('form').addEventListener('submit', function() {
+            gtag && gtag('event', 'purchase_submit', {
+                currency: '{{ config.get("CURRENCY", "RUB") }}',
+                value: {{ cart_items|sum(attribute='total') }}
+            });
+        });
+    </script>
+</body>
+</html>

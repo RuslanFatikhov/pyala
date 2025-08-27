@@ -53,6 +53,7 @@ class ProductService:
                             old_price = row.get('old_price', '')
                             old_price = float(old_price) if old_price else None
                             
+                            # STOCK СОХРАНЯЕМ В ДАННЫХ, НО НЕ ИСПОЛЬЗУЕМ ДЛЯ ПРОВЕРОК
                             stock = int(row.get('stock', 0))
                             is_active = row.get('is_active', '0') == '1'
                             
@@ -69,7 +70,7 @@ class ProductService:
                                 'volume_ml': row.get('volume_ml', '').strip(),
                                 'color': row.get('color', '').strip(),
                                 'images': images,
-                                'stock': stock,
+                                'stock': stock,  # Сохраняем для совместимости
                                 'is_active': is_active,
                                 'description': row.get('description', '').strip()
                             }
@@ -98,7 +99,7 @@ class ProductService:
         self._load_products()
     
     def get_all_products(self) -> List[Dict]:
-        """Получение всех активных продуктов"""
+        """Получение всех активных продуктов БЕЗ проверки stock"""
         with self._lock:
             result = [p for p in self._cache.values() if p['is_active']]
             print(f"🔍 DEBUG: get_all_products возвращает {len(result)} активных товаров из {len(self._cache)} всего")
@@ -159,7 +160,7 @@ class ProductService:
     def get_filtered_products(self, category: str = '', query: str = '', 
                             price_min: Optional[int] = None, price_max: Optional[int] = None,
                             page: int = 1, per_page: int = 12) -> Tuple[List[Dict], int]:
-        """Получение продуктов с фильтрами и пагинацией"""
+        """Получение продуктов с фильтрами и пагинацией БЕЗ проверки stock"""
         products = self.get_all_products()
         
         # Фильтрация
@@ -194,15 +195,15 @@ class ProductService:
             return len(self._cache)
     
     def get_active_products_count(self) -> int:
-        """Количество активных продуктов"""
+        """Количество активных продуктов БЕЗ проверки stock"""
         return len(self.get_all_products())
     
     def get_pialki_products(self, query: str = '', price_min: Optional[int] = None, 
                            price_max: Optional[int] = None, sort_by: str = 'default',
                            page: int = 1, per_page: int = 12) -> Tuple[List[Dict], int]:
-        """Получение товаров пиалок (SKU начинается с PIA) с фильтрами и сортировкой"""
+        """Получение товаров пиалок (SKU начинается с PIA) БЕЗ проверки stock"""
         with self._lock:
-            # Фильтрация по SKU начинающемуся с PIA
+            # Фильтрация по SKU начинающемуся с PIA - БЕЗ проверки stock
             products = [p for p in self._cache.values() 
                        if p['is_active'] and p['sku'].startswith('PIA')]
             
@@ -247,7 +248,7 @@ class ProductService:
             return products, total_pages
 
     def get_pialki_stats(self) -> Dict:
-        """Получение статистики по пиалкам"""
+        """Получение статистики по пиалкам БЕЗ проверки stock"""
         with self._lock:
             pialki = [p for p in self._cache.values() 
                      if p['is_active'] and p['sku'].startswith('PIA')]
@@ -258,13 +259,15 @@ class ProductService:
                     'price_range': {'min': 0, 'max': 0},
                     'volume_range': {'min': 0, 'max': 0},
                     'colors': [],
-                    'in_stock_count': 0
+                    'available_count': 0  # Переименовано из in_stock_count
                 }
             
             prices = [p['price'] for p in pialki]
             volumes = [int(p['volume_ml']) for p in pialki if p['volume_ml'].isdigit()]
             colors = list(set([p['color'] for p in pialki if p['color']]))
-            in_stock = [p for p in pialki if p['stock'] > 0]
+            
+            # УБРАНА проверка stock - все активные товары считаются доступными
+            available = pialki  # Все активные пиалки доступны
             
             return {
                 'total_count': len(pialki),
@@ -277,5 +280,5 @@ class ProductService:
                     'max': max(volumes) if volumes else 0
                 },
                 'colors': sorted(colors),
-                'in_stock_count': len(in_stock)
+                'available_count': len(available)  # Все активные товары доступны
             }

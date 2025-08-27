@@ -112,11 +112,10 @@ class ProductCSVValidator:
                     except ValueError:
                         line_errors.append("Некорректный формат старой цены")
                 
-                # Остаток
+                # Остаток - УПРОЩЕННАЯ проверка (просто что это число, без ограничений)
                 try:
                     stock = int(row.get('stock', 0))
-                    if stock < 0:
-                        line_errors.append("Остаток не может быть отрицательным")
+                    # Убираем проверку на отрицательность - разрешаем любые значения
                 except ValueError:
                     line_errors.append("Некорректный формат остатка")
                 

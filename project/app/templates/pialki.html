@@ -8,13 +8,7 @@
     <div class="category-hero">
         <h1>Керамические пиалки</h1>
         <p>Уникальные пиалки ручной работы для настоящих ценителей чайной церемонии</p>
-    
     </div>
-
-
-
-
-
 
     <!-- Товары -->
     <div class="products-grid">
@@ -61,6 +55,7 @@
             <span class="old-price">{{ product.old_price }} {{ config.get('CURRENCY', 'RUB') }}</span>
             {% endif %}
           </div>
+          <!-- УБРАНА информация о наличии -->
         </a>
       </div>
         {% else %}
@@ -70,10 +65,6 @@
             </div>
         {% endfor %}
     </div>
-    
-
-
 </div>
-
 
 {% endblock %}

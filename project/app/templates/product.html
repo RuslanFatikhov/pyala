@@ -53,10 +53,11 @@
     <div class="product-info">
         <!-- Цена -->
         <span class="price-section">
-            {% if product.old_price %}
-                <span class="old-price-large">{{ product.old_price }} ₽</span>
-            {% endif %}
+            
             <span class="current-price-large">{{ product.price }} ₽</span>
+            {% if product.old_price %}
+                <span class="old-price1">{{ product.old_price }} ₽</span>
+            {% endif %}
             {% if product.old_price %}
                 {% set discount = ((product.old_price - product.price) / product.old_price * 100) | round %}
                 <span class="discount-badge">-{{ discount }}%</span>
@@ -107,12 +108,12 @@
             </div>
         </div>
 
-        <!-- Добавление в корзину -->
+        <!-- Добавление в корзину БЕЗ проверки stock -->
         <div class="add-to-cart-section">
-                <button class="btn-large-color1" 
-                        onclick="addToCartFromPDP('{{ product.sku }}')">
-                    Добавить в корзину
-                </button>
+            <button class="btn-large-color1" 
+                    onclick="addToCartFromPDP('{{ product.sku }}')">
+                Добавить в корзину
+            </button>
         </div>
     </div>
 </div>
@@ -178,13 +179,12 @@
             {% endif %}
         </span>
 
-        <!-- Добавление в корзину -->
+        <!-- Добавление в корзину БЕЗ проверки stock -->
         <div class="add-to-cart-section-desktop">
-                <button class="btn-large-color1" 
-                        onclick="addToCartFromPDP('{{ product.sku }}')">
-                    Добавить в корзину
-                </button>
-
+            <button class="btn-large-color1" 
+                    onclick="addToCartFromPDP('{{ product.sku }}')">
+                Добавить в корзину
+            </button>
         </div>
 
         <div class="product-tabs">

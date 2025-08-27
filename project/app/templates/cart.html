@@ -24,7 +24,7 @@
     <div class="container">
 
         <!-- Header -->
-        <span class="cart-header">
+        <span class="page-header">
             <span><h1 class="color-1">Корзина</h1></span>
             
             <!--Кнопка закрытия корзины (Кнопка назад)-->
@@ -80,7 +80,7 @@
             {% else %}
                 <div class="empty-cart">
                     <h2>Ваша корзина пуста</h2>
-                    <a href="{{ url_for('public.home') }}" class="btn-large-color1">Перейти в каталог</a>
+                    <a href="{{ url_for('public.catalog') }}" class="btn-large-color1">Перейти в каталог</a>
                 </div>
             {% endif %}
         </div>
