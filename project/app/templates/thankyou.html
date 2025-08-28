@@ -4,9 +4,15 @@
 
 {% block content %}
 <div class="container">
+
+    <div class="thank-you-header">
+            <h1>Спасибо за заказ!</h1>
+    </div>
+
     <div class="thank-you-page">
-        <div class="success-icon">✅</div>
-        <h1>Спасибо за заказ!</h1>
+
+        
+
         
         {% if order_id %}
             <p class="order-number">Номер вашего заказа: <strong>#{{ order_id }}</strong></p>
@@ -17,7 +23,7 @@
             <p>Мы свяжемся с вами в ближайшее время для подтверждения деталей доставки.</p>
         </div>
         
-        <div class="next-steps">
+        <!--div class="next-steps">
             <h3>Что дальше?</h3>
             <ul>
                 <li>Мы обработаем ваш заказ в течение 1-2 рабочих дней</li>
@@ -25,13 +31,10 @@
                 <li>Доставка осуществляется в течение 3-7 рабочих дней</li>
                 <li>Оплата производится при получении товара</li>
             </ul>
-        </div>
+        </div-->
         
         <div class="action-buttons">
-            <a href="{{ url_for('public.catalog') }}" class="btn btn-primary">
-                Продолжить покупки
-            </a>
-            <a href="{{ url_for('public.home') }}" class="btn btn-outline">
+            <a href="{{ url_for('public.home') }}" class="btn-large-color2">
                 На главную
             </a>
         </div>

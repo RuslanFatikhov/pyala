@@ -264,6 +264,19 @@ footer a{
     gap: 5px;
 }
 
+.thank-you-header{
+    padding: 20px;
+    border-bottom: 1px solid var(--color-1);
+}
+
+.thank-you-page{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    margin-bottom: 50vh;
+}
+
 .hstack{
     display: flex;
     flex-direction: row;

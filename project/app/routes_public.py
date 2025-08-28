@@ -15,24 +15,11 @@ notification_service = NotificationService()
 def home():
     """Главная страница с новинками"""
     try:
-        # Вариант 1: Последние 4 добавленных товара (по дате)
         featured_products = product_service.get_featured_products(limit=4)
-        
-        # Вариант 2: Товары за последние 30 дней
-        # featured_products = product_service.get_new_products(days=30, limit=4)
-        
-        # Вариант 3: Товары за последние 60 дней
-        # featured_products = product_service.get_new_products(days=60, limit=4)
-        
-        # Вариант 4: Конкретные SKU
-        # featured_skus = ['PIA-004', 'PIA-005', 'PIA-006', 'SET-001']
-        # featured_products = product_service.get_products_by_skus(featured_skus)
-        
         return render_template('home.html', products=featured_products)
     except Exception as e:
         logging.error(f"Error loading home page: {e}")
         return render_template('errors/500.html'), 500
-
 
 @public_bp.route('/catalog')
 def catalog():
@@ -88,7 +75,6 @@ def product_detail(sku):
         if not product:
             return render_template('errors/404.html'), 404
         
-        # Аналитика: просмотр товара
         return render_template('product.html', product=product)
     except Exception as e:
         logging.error(f"Error loading product {sku}: {e}")
@@ -96,11 +82,13 @@ def product_detail(sku):
 
 @public_bp.route('/cart/add', methods=['POST'])
 def add_to_cart():
-    """Добавление товара в корзину БЕЗ проверки stock"""
+    """Добавление товара в корзину"""
     try:
         data = request.get_json()
         sku = data.get('sku')
         qty = data.get('qty', 1)
+
+        print(f"DEBUG: Adding to cart - SKU: {sku}, Qty: {qty}")
 
         if not sku:
             return jsonify({'error': 'SKU is required'}), 400
@@ -110,8 +98,6 @@ def add_to_cart():
         if not product or not product['is_active']:
             return jsonify({'error': 'Product not found or inactive'}), 404
 
-        # УБРАНА проверка наличия stock
-
         # Добавление в корзину (session)
         if 'cart' not in session:
             session['cart'] = {}
@@ -119,10 +105,10 @@ def add_to_cart():
         current_qty = session['cart'].get(sku, 0)
         new_qty = current_qty + qty
 
-        # УБРАНА проверка stock при обновлении количества
-
         session['cart'][sku] = new_qty
         session.modified = True
+
+        print(f"DEBUG: Cart updated - {session['cart']}")
 
         # Подсчет итогов корзины
         cart_summary = _get_cart_summary()
@@ -137,7 +123,7 @@ def add_to_cart():
 
 @public_bp.route('/cart/update', methods=['POST'])
 def update_cart():
-    """Обновление количества товара в корзине БЕЗ проверки stock"""
+    """Обновление количества товара в корзине"""
     try:
         data = request.get_json()
         sku = data.get('sku')
@@ -152,7 +138,7 @@ def update_cart():
         if qty <= 0:
             session['cart'].pop(sku, None)
         else:
-            # Проверяем только существование продукта, БЕЗ проверки stock
+            # Проверяем только существование продукта
             product = product_service.get_product_by_sku(sku)
             if product:
                 session['cart'][sku] = qty
@@ -198,12 +184,8 @@ def remove_from_cart():
 def cart():
     """Страница корзины"""
     try:
-        # Отладочная информация
-        print(f"DEBUG: Session cart: {session.get('cart')}")
-        
         cart_items = _get_cart_items()
-        print(f"DEBUG: Cart items count: {len(cart_items)}")
-        
+        print(f"DEBUG: Cart page - {len(cart_items)} items")
         return render_template('cart.html', cart_items=cart_items)
     except Exception as e:
         logging.error(f"Error loading cart: {e}")
@@ -213,19 +195,27 @@ def cart():
 def checkout():
     """Оформление заказа"""
     if request.method == 'GET':
+        print("DEBUG: GET request to /checkout")
         # Проверка что корзина не пуста
         if not session.get('cart'):
+            print("DEBUG: Cart is empty for checkout")
             flash('Корзина пуста', 'warning')
             return redirect(url_for('public.catalog'))
         
         cart_items = _get_cart_items()
+        print(f"DEBUG: Checkout GET - {len(cart_items)} items in cart")
         return render_template('checkout.html', cart_items=cart_items)
     
+    # POST запрос
+    print("DEBUG: POST request to /checkout received")
     try:
-        # POST - обработка формы
+        # Проверка корзины
         if not session.get('cart'):
+            print("DEBUG: Cart is empty during POST")
             flash('Корзина пуста', 'error')
             return redirect(url_for('public.catalog'))
+
+        print(f"DEBUG: Cart contents: {session.get('cart')}")
 
         # Валидация формы
         form_data = {
@@ -236,20 +226,29 @@ def checkout():
             'comment': request.form.get('comment', '').strip()
         }
 
+        print(f"DEBUG: Form data: {form_data}")
+
         is_valid, errors = checkout_validator.validate(form_data)
         
         if not is_valid:
+            print(f"DEBUG: Form validation failed: {errors}")
             cart_items = _get_cart_items()
             return render_template('checkout.html', 
                                  cart_items=cart_items,
                                  errors=errors,
                                  form_data=form_data)
 
+        print("DEBUG: Form validation passed, creating order...")
+
         # Создание заказа
         cart_items = _get_cart_items()
+        print(f"DEBUG: Cart items for order: {len(cart_items)} items")
+        
         order_id = order_service.create_order(form_data, cart_items)
+        print(f"DEBUG: Order created with ID: {order_id}")
         
         if not order_id:
+            print("DEBUG: Failed to create order")
             flash('Ошибка создания заказа. Попробуйте еще раз.', 'error')
             return render_template('checkout.html', 
                                  cart_items=cart_items,
@@ -258,16 +257,20 @@ def checkout():
         # Отправка уведомлений
         try:
             notification_service.send_order_notification(order_id, form_data, cart_items)
+            print("DEBUG: Notifications sent successfully")
         except Exception as e:
+            print(f"DEBUG: Error sending notifications: {e}")
             logging.error(f"Error sending notifications for order {order_id}: {e}")
 
         # Очистка корзины
         session['cart'] = {}
         session.modified = True
+        print("DEBUG: Cart cleared")
 
         return redirect(url_for('public.thank_you', order_id=order_id))
 
     except Exception as e:
+        print(f"DEBUG: Exception in checkout POST: {e}")
         logging.error(f"Error processing checkout: {e}")
         flash('Произошла ошибка при оформлении заказа', 'error')
         return render_template('errors/500.html'), 500
@@ -276,52 +279,22 @@ def checkout():
 def thank_you():
     """Страница благодарности после заказа"""
     order_id = request.args.get('order_id')
+    print(f"DEBUG: Thank you page - order_id: {order_id}")
     return render_template('thankyou.html', order_id=order_id)
-
-def _get_cart_summary():
-    """Получение сводки корзины"""
-    if not session.get('cart'):
-        return {'count': 0, 'total': 0}
-    
-    cart_items = _get_cart_items()
-    count = sum(item['qty'] for item in cart_items)
-    total = sum(item['total'] for item in cart_items)
-    
-    return {'count': count, 'total': total}
-
-def _get_cart_items():
-    """Получение товаров корзины с деталями БЕЗ проверки stock"""
-    if not session.get('cart'):
-        return []
-    
-    cart_items = []
-    for sku, qty in session['cart'].items():
-        product = product_service.get_product_by_sku(sku)
-        # УБРАНА проверка stock - показываем все активные товары
-        if product and product['is_active']:
-            cart_items.append({
-                'product': product,
-                'qty': qty,
-                'total': product['price'] * qty
-            })
-            # Добавьте эту отладочную строку временно
-            print(f"DEBUG: SKU={sku}, Price={product['price']}, Qty={qty}, Total={product['price'] * qty}")
-    
-    return cart_items
 
 @public_bp.route('/pialki')
 def pialki():
-    """Страница категории Пиалки - только товары с SKU начинающимися на PIA"""
+    """Страница категории Пиалки"""
     try:
         # Получение параметров фильтрации
         q = request.args.get('q', '')
         price_min = request.args.get('price_min', type=int)
         price_max = request.args.get('price_max', type=int)
-        sort_by = request.args.get('sort', 'default')  # default, price_asc, price_desc, name
+        sort_by = request.args.get('sort', 'default')
         page = request.args.get('page', 1, type=int)
         per_page = 12
 
-        # Получение товаров пиалок (SKU начинается с PIA)
+        # Получение товаров пиалок
         products, total_pages = product_service.get_pialki_products(
             query=q,
             price_min=price_min,
@@ -348,3 +321,32 @@ def pialki():
     except Exception as e:
         logging.error(f"Error loading pialki page: {e}")
         return render_template('errors/500.html'), 500
+
+def _get_cart_summary():
+    """Получение сводки корзины"""
+    if not session.get('cart'):
+        return {'count': 0, 'total': 0}
+    
+    cart_items = _get_cart_items()
+    count = sum(item['qty'] for item in cart_items)
+    total = sum(item['total'] for item in cart_items)
+    
+    return {'count': count, 'total': total}
+
+def _get_cart_items():
+    """Получение товаров корзины с деталями"""
+    if not session.get('cart'):
+        return []
+    
+    cart_items = []
+    for sku, qty in session['cart'].items():
+        product = product_service.get_product_by_sku(sku)
+        if product and product['is_active']:
+            cart_items.append({
+                'product': product,
+                'qty': qty,
+                'total': product['price'] * qty
+            })
+    
+    print(f"DEBUG: _get_cart_items returning {len(cart_items)} items")
+    return cart_items

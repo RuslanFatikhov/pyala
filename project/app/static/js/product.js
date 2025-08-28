@@ -1,5 +1,4 @@
 // product.js - JavaScript для страницы товара
-
 // Смена главного изображения
 function changeMainImage(src, thumbnail) {
     // Обновляем все изображения с ID main-product-image (мобильное и десктопное)

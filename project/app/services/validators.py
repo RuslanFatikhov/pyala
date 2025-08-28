@@ -7,7 +7,7 @@ class CheckoutValidator:
     """Валидатор формы оформления заказа"""
     
     def __init__(self):
-        self.phone_pattern = re.compile(r'^\+?[0-9\s\-\(\)]{10,15}$')
+        self.phone_pattern = re.compile(r'^\+?[0-9\s\-\(\)]+$')
     
     def validate(self, form_data: Dict) -> Tuple[bool, Dict]:
         """Валидация данных формы checkout"""

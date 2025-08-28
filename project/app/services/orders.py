@@ -4,7 +4,10 @@ import os
 import threading
 from datetime import datetime
 from typing import List, Dict, Tuple, Optional
-import portalocker
+try:
+    import portalocker
+except ImportError:
+    portalocker = None
 
 class OrderService:
     """Сервис для работы с заказами"""
@@ -46,22 +49,31 @@ class OrderService:
     
     def create_order(self, form_data: Dict, cart_items: List[Dict]) -> Optional[int]:
         """Создание заказа с потокобезопасной записью"""
+        print(f"DEBUG: Starting create_order with {len(cart_items)} items")
+        
         with self._lock:
             try:
                 # Подготовка данных заказа
                 order_id = self._get_next_order_id()
+                print(f"DEBUG: Generated order_id: {order_id}")
+                
                 created_at = datetime.now().strftime('%Y-%m-%d %H:%M')
+                print(f"DEBUG: Created at: {created_at}")
                 
                 # Формирование строки товаров: SKU:qty|SKU:qty
                 items_str = '|'.join([f"{item['product']['sku']}:{item['qty']}" 
                                     for item in cart_items])
+                print(f"DEBUG: Items string: {items_str}")
                 
                 # Подсчет общей суммы
                 total = sum(item['total'] for item in cart_items)
+                print(f"DEBUG: Total: {total}")
                 
                 # Запись в CSV с блокировкой файла
+                print(f"DEBUG: Writing to {self.csv_path}")
                 with open(self.csv_path, 'a', encoding='utf-8', newline='') as f:
-                    portalocker.lock(f, portalocker.LOCK_EX)
+                    if portalocker:
+                        portalocker.lock(f, portalocker.LOCK_EX)
                     try:
                         writer = csv.writer(f)
                         writer.writerow([
@@ -77,11 +89,10 @@ class OrderService:
                             'new'
                         ])
                     finally:
-                        portalocker.unlock(f)
-                
+                        if portalocker:
+                            portalocker.unlock(f)
                 return order_id
-                
-            except Exception as e:
+            except Exception:
                 return None
     
     def get_orders_paginated(self, status_filter: str = '', page: int = 1, 
