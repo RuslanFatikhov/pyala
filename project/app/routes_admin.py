@@ -4,12 +4,12 @@ from datetime import datetime
 from functools import wraps
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, send_file, jsonify
 from werkzeug.utils import secure_filename
-from app.services.products import ProductService
+from app.services.product_service import ProductService
 from app.services.orders import OrderService
 from app.services.validators import ProductCSVValidator
 
 # Инициализация сервисов
-product_service = ProductService()
+product_service = ProductService(csv_path="data/products.csv")
 order_service = OrderService()
 csv_validator = ProductCSVValidator()
 
