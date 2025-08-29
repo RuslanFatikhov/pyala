@@ -25,7 +25,9 @@ def create_app():
     app.register_blueprint(public_bp)
     app.register_blueprint(admin_bp, url_prefix="/admin")
 
-    # Добавьте эти строки:
+    from .template_helpers import register_template_functions
+    register_template_functions(app)
+
     def get_category_url(category):
         category_urls = {
             'пиалы': '/pialki',

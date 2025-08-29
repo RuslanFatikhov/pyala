@@ -283,6 +283,47 @@ class ProductService:
                 'available_count': len(available)  # Все активные товары доступны
             }
 
+
+    def find_product_images(self, sku: str, max_images: int = 10) -> List[str]:
+        """Автоматически находит изображения товара по SKU"""
+        if not sku:
+            return ['/static/img/goods/no-image.jpg']
+        
+        images = []
+        goods_path = os.path.join('app', 'static', 'img', 'goods')
+        
+        if not os.path.exists(goods_path):
+            return ['/static/img/goods/no-image.jpg']
+        
+        try:
+            all_files = os.listdir(goods_path)
+        except OSError:
+            return ['/static/img/goods/no-image.jpg']
+        
+        # Ищем файлы по паттерну SKU_X.jpg (в любом регистре)
+        sku_lower = sku.lower()
+        for i in range(1, max_images + 1):
+            target_filename = f"{sku_lower}_{i}.jpg"
+            
+            found_file = None
+            for filename in all_files:
+                if filename.lower() == target_filename:
+                    found_file = filename
+                    break
+            
+            if found_file:
+                images.append(f'/static/img/goods/{found_file}')
+        
+        if not images:
+            return ['/static/img/goods/no-image.jpg']
+        
+        return images
+
+def get_product_main_image(self, sku: str) -> str:
+    """Возвращает основное изображение товара"""
+    images = self.find_product_images(sku, max_images=1)
+    return images[0] if images else '/static/img/goods/no-image.jpg'
+
 def update_product(self, sku: str, updated_data: Dict) -> bool:
     """Обновление товара в CSV файле"""
     with self._lock:

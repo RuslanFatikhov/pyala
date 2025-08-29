@@ -10,12 +10,26 @@
         <h3>Инструкции по загрузке</h3>
         <ul>
             <li>Файл должен быть в формате CSV с кодировкой UTF-8</li>
-            <li>Обязательные колонки: sku, title, price, old_price, category, volume_ml, color, images, stock, is_active, description</li>
+            <li>Обязательные колонки: <code>sku, title, price, old_price, category, volume_ml, color, stock, is_active, description</code></li>
             <li>SKU должны быть уникальными</li>
             <li>is_active должно быть 0 или 1</li>
-            <li>Изображения разделяются символом |</li>
+            <li><strong>Изображения загружаются автоматически</strong> по SKU из папки <code>static/img/goods/</code></li>
+            <li>Формат изображений: <code>SKU_1.jpg, SKU_2.jpg, ... SKU_10.jpg</code> (регистр не важен)</li>
+            <li>При отсутствии изображений будет показана заглушка <code>no-image.jpg</code></li>
             <li>Перед заменой создается автоматический бэкап</li>
         </ul>
+        
+        <div class="info-block">
+            <h4>📁 Организация изображений</h4>
+            <p>Изображения товаров должны лежать в папке <code>/static/img/goods/</code> и называться:</p>
+            <ul>
+                <li><code>PIA-001_1.jpg</code> - основное изображение</li>
+                <li><code>PIA-001_2.jpg</code> - дополнительное изображение</li>
+                <li><code>PIA-001_3.jpg</code> - еще одно изображение</li>
+                <li>... и так до <code>PIA-001_10.jpg</code></li>
+            </ul>
+            <p>Регистр букв в названии файлов не важен (<code>pia-001_1.jpg</code> тоже сработает)</p>
+        </div>
         
         <p><a href="{{ url_for('admin.download_products') }}" class="btn btn-outline">Скачать текущий файл</a></p>
     </div>
@@ -44,8 +58,49 @@
 
 <div class="csv-example">
     <h3>Пример CSV файла</h3>
-    <pre>sku,title,price,old_price,category,volume_ml,color,images,stock,is_active,description
-PIA-001,Пиала целадон 90 мл,5990,,пиалы,90,зелёный,"/static/img/pia001_1.jpg|/static/img/pia001_2.jpg",3,1,"Глазурь целадон"
-PIA-002,Матовая тёмная 70 мл,7990,8990,пиалы,70,чёрный,"https://cdn.site/pia002.jpg",1,1,"Фактурная поверхность"</pre>
+    <pre>sku,title,price,old_price,category,volume_ml,color,stock,is_active,description
+PIA-001,Пиала целадон 90 мл,5990,,пиалы,90,зелёный,3,1,"Глазурь целадон"
+PIA-002,Матовая тёмная 70 мл,7990,8990,пиалы,70,чёрный,1,1,"Фактурная поверхность"</pre>
+    
+    <div class="csv-note">
+        <strong>Обратите внимание:</strong> Колонка <code>images</code> больше не нужна! 
+        Изображения будут найдены автоматически в папке <code>static/img/goods/</code> по SKU.
+    </div>
 </div>
+
+<style>
+.info-block {
+    background: #f8f9fa;
+    border-left: 4px solid #007bff;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
+.info-block h4 {
+    margin-top: 0;
+    color: #007bff;
+}
+
+.info-block ul {
+    margin-bottom: 0.5rem;
+}
+
+.csv-note {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    padding: 0.75rem;
+    border-radius: 4px;
+    margin-top: 1rem;
+}
+
+.upload-instructions code {
+    background: #f8f9fa;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    color: #e83e8c;
+}
+</style>
+
 {% endblock %}

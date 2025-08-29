@@ -1,7 +1,5 @@
 {% extends "base.html" %}
-
 {% block title %}Пиалки - Керамические пиалы{% endblock %}
-
 {% block content %}
 <div class="container">
     <!-- Hero секция для пиалок -->
@@ -9,55 +7,45 @@
         <h1>Керамические пиалки</h1>
         <p>Уникальные пиалки ручной работы для настоящих ценителей чайной церемонии</p>
     </div>
-
+    
     <!-- Товары -->
     <div class="products-grid">
         {% for product in products %}
             <div class="product-card">
-        <a href="{{ url_for('public.product_detail', sku=product.sku) }}">
-          {% if product.images and product.images|length > 0 %}
-          <!-- DEBUG: Показываем что приходит в product.images[0] -->
-          <!-- Original: {{ product.images[0] }} -->
-          {% set base_name = product.images[0].rsplit('.', 1)[0] %}
-          {% set extension = product.images[0].rsplit('.', 1)[1] %}
-          {% if base_name.endswith('_1') %}
-            {% set main_image = product.images[0] %}
-            {% set hover_image = base_name[:-2] + '_2.' + extension %}
-          {% elif base_name.endswith('_2') %}
-            {% set main_image = base_name[:-2] + '_1.' + extension %}
-            {% set hover_image = product.images[0] %}
-          {% else %}
-            {% set main_image = base_name + '_1.' + extension %}
-            {% set hover_image = base_name + '_2.' + extension %}
-          {% endif %}
-          <div class="product-image">
-            <img class="main-image"
-               src="{{ main_image }}"
-               alt="{{ product.title }}"
-               loading="lazy">
-            <img class="secondary-image"
-               src="{{ hover_image }}"
-               alt="{{ product.title }}"
-               loading="lazy">
-          </div>
-          {% else %}
-          <div class="product-image">
-            <img class="main-image"
-               src="/static/img/no-image.jpg"
-               alt="Изображение недоступно"
-               loading="lazy">
-          </div>
-          {% endif %}
-          <h3>{{ product.title }}</h3>
-          <div class="price">
-            <span class="current-price">{{ product.price }} {{ config.get('CURRENCY', 'RUB') }}</span>
-            {% if product.old_price %}
-            <span class="old-price">{{ product.old_price }} {{ config.get('CURRENCY', 'RUB') }}</span>
-            {% endif %}
-          </div>
-          <!-- УБРАНА информация о наличии -->
-        </a>
-      </div>
+                <a href="{{ url_for('public.product_detail', sku=product.sku) }}">
+                    {% set product_imgs = product_images(product.sku, 2) %}
+                    {% if product_imgs and product_imgs|length > 0 and not product_imgs[0].endswith('no-image.jpg') %}
+                        {% set main_image = product_imgs[0] %}
+                        {% set hover_image = product_imgs[1] if product_imgs|length > 1 else product_imgs[0] %}
+                        
+                        <div class="product-image">
+                            <img class="main-image"
+                                 src="{{ main_image }}"
+                                 alt="{{ product.title }}"
+                                 loading="lazy">
+                            <img class="secondary-image"
+                                 src="{{ hover_image }}"
+                                 alt="{{ product.title }}"
+                                 loading="lazy">
+                        </div>
+                    {% else %}
+                        <div class="product-image">
+                            <img class="main-image"
+                                 src="/static/img/goods/no-image.jpg"
+                                 alt="Изображение недоступно"
+                                 loading="lazy">
+                        </div>
+                    {% endif %}
+                    
+                    <h3>{{ product.title }}</h3>
+                    <div class="price">
+                        <span class="current-price">{{ product.price }} {{ config.get('CURRENCY', 'RUB') }}</span>
+                        {% if product.old_price %}
+                            <span class="old-price">{{ product.old_price }} {{ config.get('CURRENCY', 'RUB') }}</span>
+                        {% endif %}
+                    </div>
+                </a>
+            </div>
         {% else %}
             <div class="no-products">
                 <h3>Пиалки не найдены</h3>
@@ -66,5 +54,4 @@
         {% endfor %}
     </div>
 </div>
-
 {% endblock %}

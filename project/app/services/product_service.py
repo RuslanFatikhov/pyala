@@ -8,6 +8,216 @@ from datetime import datetime
 import uuid
 
 class ProductService:
+    """Сервис для работы с продуктами с автопоиском изображений"""
+    
+    def __init__(self):
+        self.csv_path = os.getenv('CSV_PRODUCTS_PATH', './data/products.csv')
+        self._cache = {}
+        self._categories_cache = set()
+        self._lock = threading.RLock()
+        self._load_products()
+    
+    def find_product_images(self, sku: str, max_images: int = 10) -> List[str]:
+        """
+        Автоматически находит изображения товара по SKU
+        Ищет файлы вида: SKU_1.jpg, SKU_2.jpg, ..., SKU_10.jpg
+        Поддерживает любой регистр в названии файлов
+        """
+        if not sku:
+            return ['/static/img/goods/no-image.jpg']
+        
+        images = []
+        
+        # Определяем путь к папке с изображениями
+        if current_app:
+            goods_path = os.path.join(current_app.static_folder, 'img', 'goods')
+        else:
+            # Fallback для тестирования без Flask контекста
+            goods_path = './app/static/img/goods'
+        
+        if not os.path.exists(goods_path):
+            return ['/static/img/goods/no-image.jpg']
+        
+        # Получаем список всех файлов в папке
+        try:
+            all_files = os.listdir(goods_path)
+        except OSError:
+            return ['/static/img/goods/no-image.jpg']
+        
+        # Ищем файлы по паттерну SKU_X.jpg (в любом регистре)
+        sku_lower = sku.lower()
+        for i in range(1, max_images + 1):
+            target_filename = f"{sku_lower}_{i}.jpg"
+            
+            # Ищем файл с учетом регистра
+            found_file = None
+            for filename in all_files:
+                if filename.lower() == target_filename:
+                    found_file = filename
+                    break
+            
+            if found_file:
+                images.append(f'/static/img/goods/{found_file}')
+        
+        # Если изображения не найдены, возвращаем заглушку
+        if not images:
+            return ['/static/img/goods/no-image.jpg']
+        
+        return images
+    
+    def get_product_main_image(self, sku: str) -> str:
+        """Возвращает основное изображение товара"""
+        images = self.find_product_images(sku, max_images=1)
+        return images[0] if images else '/static/img/goods/no-image.jpg'
+    
+    def _load_products(self):
+        """Загрузка товаров из CSV в кэш (БЕЗ обработки колонки images)"""
+        with self._lock:
+            products = {}
+            categories = set()
+            
+            if not os.path.exists(self.csv_path):
+                print(f"❌ CSV файл не найден: {self.csv_path}")
+                self._cache = products
+                self._categories_cache = categories
+                return
+            
+            try:
+                with open(self.csv_path, 'r', encoding='utf-8') as file:
+                    reader = csv.DictReader(file)
+                    print(f"🔍 DEBUG: Заголовки CSV: {reader.fieldnames}")
+                    
+                    row_count = 0
+                    for row in reader:
+                        row_count += 1
+                        
+                        # Получение и валидация SKU
+                        sku = row.get('sku', '').strip()
+                        if not sku:
+                            print(f"⚠️  DEBUG: Пропущена строка {row_count} - пустой SKU")
+                            continue
+                        
+                        try:
+                            # Обработка цен
+                            price_str = row.get('price', '0').strip()
+                            price = int(price_str) if price_str else 0
+                            
+                            old_price_str = row.get('old_price', '').strip()
+                            old_price = int(old_price_str) if old_price_str else None
+                            
+                            # Обработка остатков (для совместимости, но не используется в отображении)
+                            stock_str = row.get('stock', '0').strip()
+                            stock = int(stock_str) if stock_str else 0
+                            
+                            # Обработка активности
+                            is_active_str = row.get('is_active', '1').strip()
+                            is_active = is_active_str in ('1', 'true', 'True', 'yes', 'Yes')
+                            
+                            # ВАЖНО: Убираем обработку колонки images - теперь изображения ищутся автоматически
+                            
+                            product = {
+                                'sku': sku,
+                                'title': row.get('title', '').strip(),
+                                'price': price,
+                                'old_price': old_price,
+                                'category': row.get('category', '').strip(),
+                                'volume_ml': row.get('volume_ml', '').strip(),
+                                'color': row.get('color', '').strip(),
+                                'images': self.find_product_images(sku),  # Автопоиск изображений
+                                'stock': stock,
+                                'is_active': is_active,
+                                'description': row.get('description', '').strip()
+                            }
+                            
+                            products[sku] = product
+                            print(f"✅ DEBUG: Добавлен товар {sku}: {product['title']} (изображений: {len(product['images'])})")
+                            
+                            if product['category']:
+                                categories.add(product['category'])
+                                
+                        except (ValueError, TypeError) as e:
+                            print(f"❌ DEBUG: Ошибка в строке {row_count}: {e}")
+                            continue
+                
+                self._cache = products
+                self._categories_cache = categories
+                print(f"📦 DEBUG: Загружено товаров: {len(products)}, категорий: {len(categories)}")
+                
+            except Exception as e:
+                print(f"❌ DEBUG: Критическая ошибка загрузки CSV: {e}")
+                import traceback
+                traceback.print_exc()
+    
+    def invalidate_cache(self):
+        """Инвалидация кэша и перезагрузка"""
+        self._load_products()
+    
+    def get_all_products(self) -> List[Dict]:
+        """Получение всех активных продуктов"""
+        with self._lock:
+            result = [p for p in self._cache.values() if p['is_active']]
+            print(f"🔍 DEBUG: get_all_products возвращает {len(result)} активных товаров из {len(self._cache)} всего")
+            return result
+    
+    def get_product_by_sku(self, sku: str) -> Optional[Dict]:
+        """Получение товара по SKU"""
+        with self._lock:
+            product = self._cache.get(sku)
+            if product and product['is_active']:
+                # Обновляем изображения при каждом запросе (на случай добавления новых файлов)
+                product['images'] = self.find_product_images(sku)
+                return product
+            return None
+    
+    def search_products(self, query: str = '', category: str = '', 
+                       price_min: int = None, price_max: int = None) -> List[Dict]:
+        """Поиск товаров с фильтрами"""
+        products = self.get_all_products()
+        
+        if not query and not category and price_min is None and price_max is None:
+            return products
+        
+        result = []
+        query_lower = query.lower() if query else ''
+        
+        for product in products:
+            # Фильтр по категории
+            if category and product.get('category', '').lower() != category.lower():
+                continue
+            
+            # Фильтр по цене
+            if price_min is not None and product['price'] < price_min:
+                continue
+            if price_max is not None and product['price'] > price_max:
+                continue
+            
+            # Фильтр по поисковому запросу
+            if query_lower:
+                searchable_text = ' '.join([
+                    product.get('title', ''),
+                    product.get('description', ''),
+                    product.get('sku', ''),
+                    product.get('color', ''),
+                    product.get('category', '')
+                ]).lower()
+                
+                if query_lower not in searchable_text:
+                    continue
+            
+            result.append(product)
+        
+        return result
+    
+    def get_categories(self) -> List[str]:
+        """Получение списка всех категорий"""
+        with self._lock:
+            return sorted(list(self._categories_cache))
+    
+    def get_featured_products(self, limit: int = 6) -> List[Dict]:
+        """Получение рекомендуемых товаров"""
+        products = self.get_all_products()
+        # Можно добавить логику выбора featured товаров
+        return products[:limit]
     def __init__(self, csv_path: str):
         self.csv_path = csv_path
         self.cache = {}

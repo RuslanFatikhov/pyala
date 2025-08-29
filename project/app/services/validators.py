@@ -54,9 +54,10 @@ class CheckoutValidator:
 class ProductCSVValidator:
     """Валидатор CSV файла продуктов"""
     
+    # Убираем колонку 'images' из обязательных - теперь изображения автоматические
     REQUIRED_COLUMNS = [
         'sku', 'title', 'price', 'old_price', 'category', 
-        'volume_ml', 'color', 'images', 'stock', 'is_active', 'description'
+        'volume_ml', 'color', 'stock', 'is_active', 'description'
     ]
     
     def validate_csv_content(self, content: str) -> Tuple[bool, List[str]]:
@@ -73,9 +74,14 @@ class ProductCSVValidator:
                 errors.append("CSV файл пустой или некорректный")
                 return False, errors
             
+            # Проверка обязательных колонок
             missing_columns = set(self.REQUIRED_COLUMNS) - set(reader.fieldnames)
             if missing_columns:
                 errors.append(f"Отсутствуют обязательные колонки: {', '.join(missing_columns)}")
+            
+            # Предупреждение о колонке images
+            if 'images' in reader.fieldnames:
+                errors.append("⚠️ ВНИМАНИЕ: Колонка 'images' игнорируется. Изображения загружаются автоматически по SKU из папки static/img/goods/")
             
             # Проверка данных
             skus = set()
@@ -83,57 +89,65 @@ class ProductCSVValidator:
             
             for row in reader:
                 line_num += 1
-                line_errors = []
+                line_prefix = f"Строка {line_num}"
                 
                 # SKU
                 sku = row.get('sku', '').strip()
                 if not sku:
-                    line_errors.append("SKU не может быть пустым")
+                    errors.append(f"{line_prefix}: SKU не может быть пустым")
                 elif sku in skus:
-                    line_errors.append(f"Дублирующийся SKU: {sku}")
+                    errors.append(f"{line_prefix}: Дублирующийся SKU '{sku}'")
                 else:
                     skus.add(sku)
-                
-                # Цена
-                try:
-                    price = float(row.get('price', 0))
-                    if price < 0:
-                        line_errors.append("Цена не может быть отрицательной")
-                except ValueError:
-                    line_errors.append("Некорректный формат цены")
-                
-                # Старая цена (опционально)
-                old_price = row.get('old_price', '').strip()
-                if old_price:
-                    try:
-                        old_price_val = float(old_price)
-                        if old_price_val < 0:
-                            line_errors.append("Старая цена не может быть отрицательной")
-                    except ValueError:
-                        line_errors.append("Некорректный формат старой цены")
-                
-                # Остаток - УПРОЩЕННАЯ проверка (просто что это число, без ограничений)
-                try:
-                    stock = int(row.get('stock', 0))
-                    # Убираем проверку на отрицательность - разрешаем любые значения
-                except ValueError:
-                    line_errors.append("Некорректный формат остатка")
-                
-                # Активность
-                is_active = row.get('is_active', '').strip()
-                if is_active not in ['0', '1']:
-                    line_errors.append("is_active должно быть 0 или 1")
                 
                 # Название
                 title = row.get('title', '').strip()
                 if not title:
-                    line_errors.append("Название товара не может быть пустым")
+                    errors.append(f"{line_prefix}: Название товара не может быть пустым")
                 
-                if line_errors:
-                    errors.append(f"Строка {line_num}: {'; '.join(line_errors)}")
+                # Цена
+                price_str = row.get('price', '').strip()
+                if not price_str:
+                    errors.append(f"{line_prefix}: Цена обязательна")
+                else:
+                    try:
+                        price = float(price_str)
+                        if price < 0:
+                            errors.append(f"{line_prefix}: Цена не может быть отрицательной")
+                    except ValueError:
+                        errors.append(f"{line_prefix}: Некорректная цена '{price_str}'")
+                
+                # Старая цена (опционально)
+                old_price_str = row.get('old_price', '').strip()
+                if old_price_str:
+                    try:
+                        old_price = float(old_price_str)
+                        if old_price < 0:
+                            errors.append(f"{line_prefix}: Старая цена не может быть отрицательной")
+                    except ValueError:
+                        errors.append(f"{line_prefix}: Некорректная старая цена '{old_price_str}'")
+                
+                # Остаток
+                stock_str = row.get('stock', '').strip()
+                if stock_str:
+                    try:
+                        stock = int(stock_str)
+                        if stock < 0:
+                            errors.append(f"{line_prefix}: Остаток не может быть отрицательным")
+                    except ValueError:
+                        errors.append(f"{line_prefix}: Некорректный остаток '{stock_str}'")
+                
+                # Активность товара
+                is_active_str = row.get('is_active', '').strip()
+                if is_active_str not in ('0', '1', '', 'true', 'false', 'True', 'False'):
+                    errors.append(f"{line_prefix}: is_active должно быть 0, 1, true или false")
             
-            return len(errors) == 0, errors
-            
+            # Проверка минимального количества товаров
+            if len(skus) == 0:
+                errors.append("CSV файл не содержит валидных товаров")
+        
         except Exception as e:
             errors.append(f"Ошибка парсинга CSV: {str(e)}")
-            return False, errors
+        
+        is_valid = len(errors) == 0
+        return is_valid, errors
