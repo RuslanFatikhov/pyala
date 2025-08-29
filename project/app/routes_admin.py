@@ -1,35 +1,44 @@
-from flask import Blueprint, render_template, request, session, redirect, url_for, flash, send_file, jsonify
-from werkzeug.utils import secure_filename
-from .services.products import ProductService
-from .services.validators import ProductCSVValidator
 import os
 import logging
 from datetime import datetime
+from functools import wraps
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, send_file, jsonify
+from werkzeug.utils import secure_filename
+from app.services.products import ProductService
+from app.services.orders import OrderService
+from app.services.validators import ProductCSVValidator
 
-# Импорты для безопасности
-try:
-    from .services.secure_orders import SecureOrderService
-    SECURITY_ENABLED = True
-    print("Система безопасности включена")
-except ImportError:
-    from .services.orders import OrderService
-    SECURITY_ENABLED = False
-    print("Работаем без модулей безопасности")
-
-admin_bp = Blueprint('admin', __name__)
+# Инициализация сервисов
 product_service = ProductService()
-
-if SECURITY_ENABLED:
-    order_service = SecureOrderService()
-else:
-    order_service = OrderService()
-
+order_service = OrderService()
 csv_validator = ProductCSVValidator()
 
+# Blueprint
+admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
+
+# Настройка безопасности
+SECURITY_ENABLED = os.getenv('SECURITY_ENABLED', 'true').lower() == 'true'
+ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'admin')
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
+
 def login_required(f):
-    from functools import wraps
+    """Декоратор для проверки авторизации"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        if not SECURITY_ENABLED:
+            return f(*args, **kwargs)
+        if not session.get('admin_logged_in'):
+            return redirect(url_for('admin.login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def secure_admin_required(f):
+    """Декоратор для проверки авторизации (только при включенной безопасности)"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not SECURITY_ENABLED:
+            flash('Система безопасности отключена. Включите SECURITY_ENABLED=true', 'warning')
+            return redirect(url_for('admin.dashboard'))
         if not session.get('admin_logged_in'):
             return redirect(url_for('admin.login'))
         return f(*args, **kwargs)
@@ -37,24 +46,23 @@ def login_required(f):
 
 @admin_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'GET':
-        return render_template('admin/login.html')
-    
-    username = request.form.get('username', '').strip()
-    password = request.form.get('password', '')
-    
-    admin_username = os.getenv('ADMIN_USERNAME', 'admin')
-    admin_password = os.getenv('ADMIN_PASSWORD', 'admin')
-    
-    if username == admin_username and password == admin_password:
+    if not SECURITY_ENABLED:
         session['admin_logged_in'] = True
-        session['admin_username'] = username
-        session['session_start'] = datetime.now().isoformat()
-        flash('Вы успешно авторизованы', 'success')
         return redirect(url_for('admin.dashboard'))
-    else:
-        flash('Неверные данные для входа', 'error')
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+            session['admin_logged_in'] = True
+            flash('Добро пожаловать в админ-панель!', 'success')
+            return redirect(url_for('admin.dashboard'))
+        else:
+            flash('Неверные данные для входа', 'error')
         return render_template('admin/login.html')
+    
+    return render_template('admin/login.html')
 
 @admin_bp.route('/logout', methods=['POST'])
 @login_required
@@ -83,6 +91,62 @@ def dashboard():
             'total_orders': 0, 'new_orders': 0,
             'security_enabled': SECURITY_ENABLED
         })
+
+@admin_bp.route('/products')
+@login_required
+def products_list():
+    """Список товаров с поиском и фильтрацией"""
+    try:
+        # Параметры из запроса
+        search = request.args.get('search', '').strip()
+        category_filter = request.args.get('category', '').strip()
+        page = request.args.get('page', 1, type=int)
+        per_page = 20
+        
+        # Получение всех товаров
+        all_products = product_service.get_all_products()
+        
+        # Поиск по названию, SKU, описанию
+        if search:
+            search_lower = search.lower()
+            all_products = [p for p in all_products 
+                          if search_lower in p['title'].lower() or 
+                             search_lower in p['sku'].lower() or
+                             search_lower in p['description'].lower()]
+        
+        if category_filter:
+            all_products = [p for p in all_products if p['category'] == category_filter]
+        
+        # Пагинация
+        total = len(all_products)
+        total_pages = (total + per_page - 1) // per_page if total > 0 else 1
+        
+        start = (page - 1) * per_page
+        end = start + per_page
+        products = all_products[start:end]
+        
+        categories = product_service.get_categories()
+        
+        print(f"DEBUG: Found {len(products)} products on page {page}")
+        
+        return render_template('admin/products_list.html',
+                             products=products,
+                             categories=categories,
+                             current_page=page,
+                             total_pages=total_pages,
+                             search=search,
+                             category_filter=category_filter)
+    except Exception as e:
+        print(f"DEBUG: Exception in products_list: {e}")
+        logging.error(f"Error loading products list: {e}")
+        flash('Ошибка загрузки списка товаров', 'error')
+        return render_template('admin/products_list.html',
+                             products=[],
+                             categories=[],
+                             current_page=1,
+                             total_pages=0,
+                             search='',
+                             category_filter='')
 
 @admin_bp.route('/orders')
 @login_required
@@ -125,10 +189,29 @@ def update_order_status(order_id):
         flash('Ошибка обновления статуса заказа', 'error')
         return redirect(url_for('admin.orders_list'))
 
-# Остальные методы остаются из исходного файла...
+@admin_bp.route('/orders/download')
+@login_required
+def download_orders():
+    """Скачивание файла заказов"""
+    try:
+        csv_path = os.getenv('CSV_ORDERS_PATH', './data/orders.csv')
+        if not os.path.exists(csv_path):
+            flash('Файл заказов не найден', 'error')
+            return redirect(url_for('admin.orders_list'))
+        
+        timestamp = datetime.now().strftime("%Y%m%d")
+        return send_file(csv_path, as_attachment=True, 
+                        download_name=f'orders_export_{timestamp}.csv')
+        
+    except Exception as e:
+        logging.error(f"Error downloading orders CSV: {e}")
+        flash('Ошибка скачивания файла', 'error')
+        return redirect(url_for('admin.orders_list'))
+
 @admin_bp.route('/products/download')
 @login_required
 def download_products():
+    """Скачивание текущего products.csv"""
     try:
         csv_path = os.getenv('CSV_PRODUCTS_PATH', './data/products.csv')
         if not os.path.exists(csv_path):
@@ -143,42 +226,94 @@ def download_products():
 @admin_bp.route('/products/upload', methods=['GET', 'POST'])
 @login_required
 def upload_products():
+    """Загрузка нового products.csv"""
     if request.method == 'GET':
         return render_template('admin/products_upload.html')
+    
     try:
+        # Проверка файла
         if 'file' not in request.files:
             flash('Файл не выбран', 'error')
             return render_template('admin/products_upload.html')
+        
         file = request.files['file']
-        if file.filename == '' or not file.filename.endswith('.csv'):
-            flash('Выберите CSV файл', 'error')
+        if file.filename == '':
+            flash('Файл не выбран', 'error')
             return render_template('admin/products_upload.html')
         
+        if not file.filename.endswith('.csv'):
+            flash('Файл должен иметь расширение .csv', 'error')
+            return render_template('admin/products_upload.html')
+        
+        # Безопасное имя файла
+        filename = secure_filename(file.filename)
+        
+        # Чтение содержимого файла
         content = file.read().decode('utf-8')
+        
+        # DRY-RUN валидация
         is_valid, errors = csv_validator.validate_csv_content(content)
+        
         if not is_valid:
-            return render_template('admin/products_upload.html', validation_errors=errors)
+            return render_template('admin/products_upload.html', 
+                                 validation_errors=errors)
         
+        # Создание бэкапа текущего файла
         csv_path = os.getenv('CSV_PRODUCTS_PATH', './data/products.csv')
-        backup_dir = os.getenv('BACKUP_DIR', './data/backups')
-        
         if os.path.exists(csv_path):
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M')
-            backup_path = os.path.join(backup_dir, f'products_{timestamp}.csv')
+            backup_dir = './data/backups'
             os.makedirs(backup_dir, exist_ok=True)
-            with open(csv_path, 'r', encoding='utf-8') as src:
-                with open(backup_path, 'w', encoding='utf-8') as dst:
-                    dst.write(src.read())
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            backup_path = f"{backup_dir}/products_backup_{timestamp}.csv"
+            
+            import shutil
+            shutil.copy2(csv_path, backup_path)
+            flash(f'Создан бэкап: {backup_path}', 'info')
         
-        temp_path = csv_path + '.tmp'
-        with open(temp_path, 'w', encoding='utf-8') as f:
+        # Сохранение нового файла
+        with open(csv_path, 'w', encoding='utf-8') as f:
             f.write(content)
-        os.replace(temp_path, csv_path)
-        product_service.invalidate_cache()
         
-        flash('Файл успешно загружен и кэш обновлен', 'success')
-        return redirect(url_for('admin.dashboard'))
+        # Перезагрузка данных в сервисе
+        product_service.reload_products()
+        
+        flash('Файл товаров успешно загружен!', 'success')
+        return redirect(url_for('admin.products_list'))
+        
     except Exception as e:
         logging.error(f"Error uploading products CSV: {e}")
-        flash(f'Ошибка загрузки файла: {str(e)}', 'error')
+        flash('Ошибка загрузки файла', 'error')
         return render_template('admin/products_upload.html')
+
+@admin_bp.route('/analytics')
+@login_required
+def analytics():
+    """Страница аналитики"""
+    try:
+        # Собираем статистику
+        total_products = product_service.get_products_count()
+        active_products = product_service.get_active_products_count()
+        total_orders = order_service.get_orders_count()
+        new_orders = order_service.get_new_orders_count()
+        
+        # Статистика по категориям
+        all_products = product_service.get_all_products()
+        categories_stats = {}
+        for product in all_products:
+            cat = product['category']
+            if cat not in categories_stats:
+                categories_stats[cat] = {'count': 0, 'total_value': 0}
+            categories_stats[cat]['count'] += 1
+            categories_stats[cat]['total_value'] += product['stock'] * product['price']
+        
+        return render_template('admin/analytics.html', stats={
+            'total_products': total_products,
+            'active_products': active_products,  
+            'total_orders': total_orders,
+            'new_orders': new_orders,
+            'categories_stats': categories_stats
+        })
+    except Exception as e:
+        logging.error(f"Error loading analytics: {e}")
+        flash('Ошибка загрузки аналитики', 'error')
+        return redirect(url_for('admin.dashboard'))
