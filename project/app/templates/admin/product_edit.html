@@ -1,0 +1,234 @@
+{% extends "admin/base.html" %}
+
+{% block title %}
+    {% if is_create %}Создание товара{% else %}Редактирование товара{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="admin-header-section">
+    <h1>
+        {% if is_create %}
+            Создание товара
+        {% else %}
+            Редактирование товара: {{ product.title }}
+        {% endif %}
+    </h1>
+    <div class="admin-actions">
+        <a href="{{ url_for('admin.products_list') }}" class="btn btn-outline">
+            ← Назад к списку
+        </a>
+    </div>
+</div>
+
+<form method="POST" class="product-form">
+    <div class="form-grid">
+        <!-- Основная информация -->
+        <div class="form-section">
+            <h3>Основная информация</h3>
+            
+            <div class="form-group">
+                <label for="sku">SKU <span class="required">*</span></label>
+                <input type="text" id="sku" name="sku" 
+                       value="{{ form_data.get('sku', '') }}" 
+                       {% if not is_create %}readonly{% endif %}
+                       class="form-input {% if errors.get('sku') %}error{% endif %}"
+                       required>
+                {% if errors.get('sku') %}
+                    <div class="error-message">{{ errors.sku }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="title">Название <span class="required">*</span></label>
+                <input type="text" id="title" name="title" 
+                       value="{{ form_data.get('title', '') }}"
+                       class="form-input {% if errors.get('title') %}error{% endif %}"
+                       required>
+                {% if errors.get('title') %}
+                    <div class="error-message">{{ errors.title }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="description">Описание</label>
+                <textarea id="description" name="description" 
+                          class="form-textarea"
+                          rows="4">{{ form_data.get('description', '') }}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="category">Категория</label>
+                <input type="text" id="category" name="category" 
+                       value="{{ form_data.get('category', '') }}"
+                       class="form-input"
+                       list="categories-list">
+                <datalist id="categories-list">
+                    {% for cat in categories %}
+                        <option value="{{ cat }}">
+                    {% endfor %}
+                </datalist>
+            </div>
+        </div>
+        
+        <!-- Цены и остатки -->
+        <div class="form-section">
+            <h3>Цена и остатки</h3>
+            
+            <div class="form-group">
+                <label for="price">Цена <span class="required">*</span></label>
+                <input type="number" id="price" name="price" 
+                       value="{{ form_data.get('price', '') }}"
+                       class="form-input {% if errors.get('price') %}error{% endif %}"
+                       min="0" step="0.01" required>
+                {% if errors.get('price') %}
+                    <div class="error-message">{{ errors.price }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="old_price">Старая цена</label>
+                <input type="number" id="old_price" name="old_price" 
+                       value="{{ form_data.get('old_price', '') }}"
+                       class="form-input {% if errors.get('old_price') %}error{% endif %}"
+                       min="0" step="0.01">
+                {% if errors.get('old_price') %}
+                    <div class="error-message">{{ errors.old_price }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="stock">Остаток</label>
+                <input type="number" id="stock" name="stock" 
+                       value="{{ form_data.get('stock', 0) }}"
+                       class="form-input {% if errors.get('stock') %}error{% endif %}"
+                       min="0">
+                {% if errors.get('stock') %}
+                    <div class="error-message">{{ errors.stock }}</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Дополнительные характеристики -->
+        <div class="form-section">
+            <h3>Характеристики</h3>
+            
+            <div class="form-group">
+                <label for="volume_ml">Объем (мл)</label>
+                <input type="number" id="volume_ml" name="volume_ml" 
+                       value="{{ form_data.get('volume_ml', '') }}"
+                       class="form-input {% if errors.get('volume_ml') %}error{% endif %}"
+                       min="0">
+                {% if errors.get('volume_ml') %}
+                    <div class="error-message">{{ errors.volume_ml }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="color">Цвет</label>
+                <input type="text" id="color" name="color" 
+                       value="{{ form_data.get('color', '') }}"
+                       class="form-input"
+                       placeholder="Например: белый, зелёный">
+            </div>
+            
+            <div class="form-group">
+                <label for="is_active">Статус товара</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="is_active" name="is_active" 
+                               {% if form_data.get('is_active', True) %}checked{% endif %}>
+                        Товар активен (отображается на сайте)
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Изображения -->
+        <div class="form-section">
+            <h3>Изображения</h3>
+            
+            <div class="form-group">
+                <label for="images">Изображения</label>
+                <textarea id="images" name="images" 
+                          class="form-textarea"
+                          rows="3"
+                          placeholder="URL изображений, разделённые | или запятыми">{{ form_data.get('images', '') }}</textarea>
+                <div class="form-help">
+                    Введите URL изображений, разделённые символом | или запятыми
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Кнопки действий -->
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">
+            {% if is_create %}Создать товар{% else %}Сохранить изменения{% endif %}
+        </button>
+        <a href="{{ url_for('admin.products_list') }}" class="btn btn-outline">Отмена</a>
+        
+        {% if not is_create %}
+            <form method="POST" action="{{ url_for('admin.product_duplicate', sku=product.sku) }}" 
+                  style="display: inline;" onsubmit="return confirm('Создать копию товара?')">
+                <button type="submit" class="btn btn-secondary">Дублировать</button>
+            </form>
+        {% endif %}
+    </div>
+</form>
+
+<script>
+// Автогенерация SKU на основе названия для новых товаров
+{% if is_create %}
+document.getElementById('title').addEventListener('input', function() {
+    const title = this.value;
+    const skuField = document.getElementById('sku');
+    
+    if (title && !skuField.dataset.manuallyEdited) {
+        // Генерируем SKU из первых букв слов
+        const words = title.toUpperCase().split(' ');
+        let sku = words.slice(0, 3).map(word => word.substr(0, 3)).join('');
+        
+        // Добавляем числовой суффикс
+        sku += '-001';
+        
+        skuField.value = sku;
+    }
+});
+
+document.getElementById('sku').addEventListener('input', function() {
+    this.dataset.manuallyEdited = 'true';
+});
+{% endif %}
+
+// Предпросмотр изображений
+document.getElementById('images').addEventListener('input', function() {
+    const urls = this.value.split(/[,\n]/).map(url => url.trim()).filter(url => url);
+    
+    // Удаляем предыдущий предпросмотр
+    const existingPreview = document.querySelector('.images-preview');
+    if (existingPreview) {
+        existingPreview.remove();
+    }
+    
+    if (urls.length > 0) {
+        const preview = document.createElement('div');
+        preview.className = 'images-preview';
+        preview.innerHTML = '<h4>Предпросмотр изображений:</h4>';
+        
+        urls.forEach((url, index) => {
+            if (index < 5) { // Показываем максимум 5 изображений
+                const img = document.createElement('img');
+                img.src = url;
+                img.style.cssText = 'width: 80px; height: 80px; object-fit: cover; margin: 5px; border: 1px solid #ddd;';
+                img.onerror = function() {
+                    this.style.display = 'none';
+                };
+                preview.appendChild(img);
+            }
+        });
+        
+        this.parentNode.appendChild(preview);
+    }
+});
+</script>
+{% endblock %}

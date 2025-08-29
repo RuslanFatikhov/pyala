@@ -28,7 +28,6 @@
 </div>
 
 <div class="quick-actions">
-    <h2>Быстрые действия</h2>
     <div class="actions-grid">
         <a href="{{ url_for('admin.upload_products') }}" class="action-card">
             <h3>📦 Обновить товары</h3>
@@ -40,15 +39,7 @@
             <p>Просмотр и управление заказами</p>
         </a>
         
-        <a href="{{ url_for('admin.download_products') }}" class="action-card">
-            <h3>⬇️ Скачать товары</h3>
-            <p>Экспорт текущего файла товаров</p>
-        </a>
-        
-        <a href="{{ url_for('admin.download_orders') }}" class="action-card">
-            <h3>⬇️ Скачать заказы</h3>
-            <p>Экспорт файла заказов</p>
-        </a>
+
     </div>
 </div>
 {% endblock %}
