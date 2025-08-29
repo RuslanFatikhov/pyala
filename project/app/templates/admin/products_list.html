@@ -1,0 +1,160 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Список товаров{% endblock %}
+
+{% block content %}
+<h1>Управление товарами</h1>
+
+<!-- Действия -->
+<div class="admin-actions">
+    <a href="{{ url_for('admin.upload_products') }}" class="btn btn-primary">
+        📦 Загрузить CSV
+    </a>
+    <a href="{{ url_for('admin.download_products') }}" class="btn btn-outline">
+        ⬇️ Скачать CSV
+    </a>
+</div>
+
+<!-- Фильтры -->
+<div class="filters-section">
+    <form method="GET" class="filters-form">
+        <div class="filter-group">
+            <input type="text" name="search" value="{{ search }}" 
+                   placeholder="Поиск по названию, SKU, описанию..." class="search-input">
+        </div>
+        
+        <div class="filter-group">
+            <select name="category" class="filter-select">
+                <option value="">Все категории</option>
+                {% for cat in categories %}
+                    <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>
+                        {{ cat }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <button type="submit" class="btn btn-secondary">Найти</button>
+        <a href="{{ url_for('admin.products_list') }}" class="btn btn-outline">Сбросить</a>
+    </form>
+</div>
+
+<!-- Таблица товаров -->
+{% if products %}
+    <div class="products-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>Изображение</th>
+                    <th>Название</th>
+                    <th>Категория</th>
+                    <th>Цена</th>
+                    <th>Старая цена</th>
+                    <th>Остаток</th>
+                    <th>Статус</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('admin.edit_product', sku=product.sku) }}" 
+                            class="btn btn-small btn-secondary">
+                            ✏️ Редактировать
+                            </a>
+                            <a href="{{ url_for('public.product_detail', sku=product.sku) }}" 
+                            target="_blank" class="btn btn-small btn-outline">
+                            👁️ Посмотреть
+                            </a>
+                        </td>
+                        
+                        <td>
+                            <span class="sku-badge">{{ product.sku }}</span>
+                        </td>
+                        <td>
+                            {% if product.images %}
+                                <img src="{{ product.images[0] }}" alt="{{ product.title }}" 
+                                     class="product-thumb" 
+                                     onerror="this.src='/static/img/no-image.jpg'">
+                            {% else %}
+                                <div class="no-image">Нет фото</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="product-info">
+                                <strong>{{ product.title }}</strong>
+                                {% if product.description %}
+                                    <div class="product-desc">
+                                        {{ product.description[:100] }}{% if product.description|length > 100 %}...{% endif %}
+                                    </div>
+                                {% endif %}
+                                {% if product.volume_ml %}
+                                    <div class="product-volume">Объем: {{ product.volume_ml }} мл</div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="category-tag">{{ product.category }}</span>
+                        </td>
+                        <td class="price-cell">
+                            <strong>{{ product.price }} ₽</strong>
+                        </td>
+                        <td class="price-cell">
+                            {% if product.old_price %}
+                                <span class="old-price">{{ product.old_price }} ₽</span>
+                            {% else %}
+                                <span class="no-price">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="stock-cell">
+                            <span class="stock-value {% if product.stock <= 0 %}out-of-stock{% elif product.stock <= 5 %}low-stock{% else %}in-stock{% endif %}">
+                                {{ product.stock }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if product.is_active %}
+                                <span class="status-active">Активен</span>
+                            {% else %}
+                                <span class="status-inactive">Неактивен</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('public.product_detail', sku=product.sku) }}" 
+                               target="_blank" class="btn btn-small btn-outline">
+                               👁️ Посмотреть
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Пагинация -->
+    {% if total_pages > 1 %}
+        <div class="pagination">
+            {% for page in range(1, total_pages + 1) %}
+                {% if page == current_page %}
+                    <span class="page-current">{{ page }}</span>
+                {% else %}
+                    <a href="{{ url_for('admin.products_list', 
+                              page=page, 
+                              search=search, 
+                              category=category_filter) }}" 
+                       class="page-link">{{ page }}</a>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+{% else %}
+    <div class="no-products">
+        <h3>Товары не найдены</h3>
+        <p>Попробуйте изменить параметры поиска или загрузить товары через CSV.</p>
+        <a href="{{ url_for('admin.upload_products') }}" class="btn btn-primary">
+            Загрузить товары
+        </a>
+    </div>
+{% endif %}
+{% endblock %}

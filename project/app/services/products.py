@@ -282,3 +282,57 @@ class ProductService:
                 'colors': sorted(colors),
                 'available_count': len(available)  # Все активные товары доступны
             }
+
+def update_product(self, sku: str, updated_data: Dict) -> bool:
+    """Обновление товара в CSV файле"""
+    with self._lock:
+        try:
+            # Создаем бэкап
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            backup_dir = os.getenv('BACKUP_DIR', './data/backups')
+            os.makedirs(backup_dir, exist_ok=True)
+            
+            backup_path = os.path.join(backup_dir, f'products_before_edit_{timestamp}.csv')
+            with open(self.csv_path, 'r', encoding='utf-8') as src:
+                with open(backup_path, 'w', encoding='utf-8') as dst:
+                    dst.write(src.read())
+            
+            # Читаем все товары
+            products = []
+            with open(self.csv_path, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                fieldnames = reader.fieldnames
+                
+                for row in reader:
+                    if row['sku'] == sku:
+                        # Обновляем нужный товар
+                        row.update({
+                            'title': updated_data['title'],
+                            'price': str(updated_data['price']),
+                            'old_price': str(updated_data['old_price']) if updated_data['old_price'] else '',
+                            'category': updated_data['category'],
+                            'volume_ml': updated_data['volume_ml'],
+                            'color': updated_data['color'],
+                            'stock': str(updated_data['stock']),
+                            'is_active': updated_data['is_active'],
+                            'description': updated_data['description']
+                        })
+                    products.append(row)
+            
+            # Перезаписываем файл
+            temp_path = self.csv_path + '.tmp'
+            with open(temp_path, 'w', encoding='utf-8', newline='') as f:
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(products)
+            
+            os.replace(temp_path, self.csv_path)
+            
+            # Обновляем кэш
+            self.invalidate_cache()
+            
+            return True
+            
+        except Exception as e:
+            print(f"DEBUG: Error updating product: {e}")
+            return False

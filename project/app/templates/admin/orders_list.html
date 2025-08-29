@@ -5,7 +5,7 @@
 {% block content %}
 <h1>Заказы</h1>
 
-<div class="orders-controls">
+<!--div class="orders-controls">
     <form method="GET" class="filter-form">
         <label>Статус:</label>
         <select name="status" onchange="this.form.submit()">
@@ -19,11 +19,11 @@
     </form>
     
     <a href="{{ url_for('admin.download_orders') }}" class="btn btn-outline">Экспорт CSV</a>
-</div>
+</div-->
 
 <div class="orders-table">
     <table>
-        <thead>
+        <!--thead>
             <tr>
                 <th>№ заказа</th>
                 <th>Дата</th>
@@ -35,7 +35,7 @@
                 <th>Статус</th>
                 <th>Действия</th>
             </tr>
-        </thead>
+        </thead-->
         <tbody>
             {% for order in orders %}
                 <tr>
@@ -45,12 +45,20 @@
                     <td>{{ order.phone }}</td>
                     <td>{{ order.city }}</td>
                     <td class="items-cell">
-                        {% for item in order.items.split('|') %}
-                            {% set sku, qty = item.split(':') %}
-                            <div>{{ sku }} x{{ qty }}</div>
-                        {% endfor %}
+                        {% if order['items'] %}
+                            {% for item_str in order['items'].split('|') %}
+                                {% if ':' in item_str %}
+                                    {% set sku, qty = item_str.split(':') %}
+                                    <div>{{ sku }} x{{ qty }}</div>
+                                {% else %}
+                                    <div>{{ item_str }}</div>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <div>Нет товаров</div>
+                        {% endif %}
                     </td>
-                    <td>{{ order.total }} {{ config.get('CURRENCY', 'RUB') }}</td>
+                    <td>{{ order.total }} ₽</td>
                     <td>
                         <span class="status status-{{ order.status }}">
                             {% if order.status == 'new' %}Новый
@@ -82,16 +90,4 @@
         </tbody>
     </table>
 </div>
-
-{% if total_pages > 1 %}
-    <div class="pagination">
-        {% for page in range(1, total_pages + 1) %}
-            {% if page == current_page %}
-                <span class="page-current">{{ page }}</span>
-            {% else %}
-                <a href="{{ url_for('admin.orders_list', page=page, status=status_filter) }}" class="page-link">{{ page }}</a>
-            {% endif %}
-        {% endfor %}
-    </div>
-{% endif %}
 {% endblock %}

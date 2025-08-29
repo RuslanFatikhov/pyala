@@ -4,22 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Админка{% endblock %} - Керамические пиалы</title>
-    <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/reset.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/admin.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/typo.css') }}" rel="stylesheet">
 </head>
 <body class="admin-body">
     <header class="admin-header">
         <nav class="admin-nav">
             <div class="nav-brand">
-                <a href="{{ url_for('admin.dashboard') }}">🏺 Админка</a>
+                <a href="{{ url_for('admin.dashboard') }}">Админка</a>
             </div>
             <div class="nav-links">
                 <a href="{{ url_for('admin.dashboard') }}">Главная</a>
                 <a href="{{ url_for('admin.orders_list') }}">Заказы</a>
-                <a href="{{ url_for('admin.upload_products') }}">Товары</a>
-                <a href="{{ url_for('public.home') }}" target="_blank">Сайт</a>
-                <form method="POST" action="{{ url_for('admin.logout') }}" style="display: inline;">
+                <a href="{{ url_for('admin.products_list') }}">Товары</a>
+                <!--form method="POST" action="{{ url_for('admin.logout') }}" style="display: inline;">
                     <button type="submit" class="btn btn-outline btn-small">Выйти</button>
-                </form>
+                </form-->
             </div>
         </nav>
     </header>
