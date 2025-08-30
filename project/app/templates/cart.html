@@ -37,15 +37,16 @@
 
             <!-- Cart Items -->
             {% if cart_items %}
-                <!-- ИСПРАВЛЕНО: Используем namespace для накопления суммы -->
+                <!-- Используем namespace для накопления суммы -->
                 {% set ns = namespace(total=0) %}
                 
                 <div class="cart-items">
                     {% for item in cart_items %}
                         <div class="cart-item" data-sku="{{ item.product.sku }}">
                             <div class="item-image">
-                                {% if item.product.images %}
-                                    <img src="{{ item.product.images[0] }}" alt="{{ item.product.title }}">
+                                {% set product_imgs = product_images(item.product.sku, 1) %}
+                                {% if product_imgs and product_imgs|length > 0 and not product_imgs[0].endswith('no-image.jpg') %}
+                                    <img src="{{ product_imgs[0] }}" alt="{{ item.product.title }}">
                                 {% else %}
                                     <div class="no-image">Нет фото</div>
                                 {% endif %}
@@ -61,7 +62,7 @@
                             </button>
                         </div>
                         
-                        <!-- ИСПРАВЛЕНО: Правильное накопление суммы через namespace -->
+                        <!-- Правильное накопление суммы через namespace -->
                         {% set ns.total = ns.total + (item.product.price * item.qty) %}
                     {% endfor %}
                 </div>

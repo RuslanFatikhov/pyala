@@ -8,13 +8,10 @@
     <h1>Управление товарами</h1>
     <div class="admin-actions">
         <a href="{{ url_for('admin.product_create') }}" class="btn btn-primary">
-            ➕ Добавить товар
+            Добавить товар
         </a>
         <a href="{{ url_for('admin.upload_products') }}" class="btn btn-outline">
-            📦 Загрузить CSV
-        </a>
-        <a href="{{ url_for('admin.download_products') }}" class="btn btn-outline">
-            ⬇️ Скачать CSV
+            Загрузить CSV
         </a>
     </div>
 </div>
@@ -70,11 +67,12 @@
             <tbody>
                 {% for product in products %}
                 <tr>
-                    <td class="product-image-cell">
-                        {% if product.images and product.images[0] %}
-                            <img src="{{ product.images[0] }}" alt="{{ product.title }}" class="product-thumbnail">
+                    <td class="image-cell">
+                        {% set product_imgs = product_images(product.sku, 1) %}
+                        {% if product_imgs and product_imgs|length > 0 and not product_imgs[0].endswith('no-image.jpg') %}
+                            <img src="{{ product_imgs[0] }}" alt="{{ product.title }}" class="product-thumb">
                         {% else %}
-                            <div class="product-no-image">📦</div>
+                            <div class="no-image-thumb">Нет фото</div>
                         {% endif %}
                     </td>
                     <td>
@@ -97,7 +95,7 @@
                         {% endif %}
                     </td>
                     <td>
-                        <span class="price">{{ "{:,.0f}".format(product.price) }} ₸</span>
+                        <span class="price">{{ "{:,.0f}".format(product.price) }} RUB</span>
                         {% if product.old_price %}
                             <br><span class="old-price">{{ "{:,.0f}".format(product.old_price) }} ₸</span>
                         {% endif %}
@@ -109,26 +107,26 @@
                     </td>
                     <td>
                         {% if product.is_active %}
-                            <span class="status-active">✓ Активен</span>
+                            <span class="status-active">Активен</span>
                         {% else %}
-                            <span class="status-inactive">✗ Неактивен</span>
+                            <span class="status-inactive">Неактивен</span>
                         {% endif %}
                     </td>
                     <td class="actions-cell">
                         <div class="action-buttons">
                             <a href="{{ url_for('admin.product_edit', sku=product.sku) }}" 
                                class="btn btn-small btn-outline" title="Редактировать">
-                                ✏️
+                                Ред.
                             </a>
                             <form method="POST" action="{{ url_for('admin.product_duplicate', sku=product.sku) }}" 
                                   style="display: inline;">
                                 <button type="submit" class="btn btn-small btn-secondary" title="Дублировать">
-                                    📋
+                                    Дуб.
                                 </button>
                             </form>
                             <button onclick="deleteProduct('{{ product.sku }}', '{{ product.title }}')" 
                                     class="btn btn-small btn-danger" title="Удалить">
-                                🗑️
+                                Уд.
                             </button>
                         </div>
                     </td>
@@ -143,7 +141,7 @@
         <div class="pagination">
             {% if page > 1 %}
                 <a href="{{ url_for('admin.products_list', page=page-1, search=search, category=category_filter) }}" 
-                   class="btn btn-outline btn-small">← Предыдущая</a>
+                   class="btn btn-outline btn-small">Предыдущая</a>
             {% endif %}
             
             <span class="pagination-info">
@@ -152,7 +150,7 @@
             
             {% if page < total_pages %}
                 <a href="{{ url_for('admin.products_list', page=page+1, search=search, category=category_filter) }}" 
-                   class="btn btn-outline btn-small">Следующая →</a>
+                   class="btn btn-outline btn-small">Следующая</a>
             {% endif %}
         </div>
     {% endif %}
@@ -180,6 +178,35 @@
         </div>
     </div>
 </div>
+
+<style>
+.product-thumb {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+.no-image-thumb {
+    width: 50px;
+    height: 50px;
+    background: #f5f5f5;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #666;
+    text-align: center;
+}
+
+.image-cell {
+    width: 60px;
+    text-align: center;
+}
+</style>
 
 <script>
 let deleteProductSku = null;
@@ -230,5 +257,3 @@ window.onclick = function(event) {
 }
 </script>
 {% endblock %}
-
-<!-- app/templates/admin/product_edit.html -->

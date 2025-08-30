@@ -8,41 +8,6 @@
         <h1>Каталог товаров</h1>
     </span>
     
-    <!-- Фильтры -->
-    <!--div class="filters">
-        <form method="GET" class="filters-form">
-            <div class="filter-group">
-                <label>Категория:</label>
-                <select name="category">
-                    <option value="">Все категории</option>
-                    {% for cat in categories %}
-                        <option value="{{ cat }}" {% if filters.category == cat %}selected{% endif %}>
-                            {{ cat }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <div class="filter-group">
-                <label>Поиск:</label>
-                <input type="text" name="q" value="{{ filters.q or '' }}" placeholder="Название товара...">
-            </div>
-            
-            <div class="filter-group">
-                <label>Цена от:</label>
-                <input type="number" name="price_min" value="{{ filters.price_min or '' }}" min="0">
-            </div>
-            
-            <div class="filter-group">
-                <label>Цена до:</label>
-                <input type="number" name="price_max" value="{{ filters.price_max or '' }}" min="0">
-            </div>
-            
-            <button type="submit" class="btn btn-secondary">Применить</button>
-            <a href="{{ url_for('public.catalog') }}" class="btn btn-outline">Сбросить</a>
-        </form>
-    </div!-->
-    
     <!-- Товары по категориям -->
     {% if products %}
         {% if filters.category %}
@@ -51,19 +16,11 @@
                 {% for product in products %}
                     <div class="product-card">
                         <a href="{{ url_for('public.product_detail', sku=product.sku) }}">
-                            {% if product.images and product.images|length > 0 %}
-                                {% set base_name = product.images[0].rsplit('.', 1)[0] %}
-                                {% set extension = product.images[0].rsplit('.', 1)[1] %}
-                                {% if base_name.endswith('_1') %}
-                                    {% set main_image = product.images[0] %}
-                                    {% set hover_image = base_name[:-2] + '_2.' + extension %}
-                                {% elif base_name.endswith('_2') %}
-                                    {% set main_image = base_name[:-2] + '_1.' + extension %}
-                                    {% set hover_image = product.images[0] %}
-                                {% else %}
-                                    {% set main_image = base_name + '_1.' + extension %}
-                                    {% set hover_image = base_name + '_2.' + extension %}
-                                {% endif %}
+                            {% set product_imgs = product_images(product.sku, 2) %}
+                            {% if product_imgs and product_imgs|length > 0 and not product_imgs[0].endswith('no-image.jpg') %}
+                                {% set main_image = product_imgs[0] %}
+                                {% set hover_image = product_imgs[1] if product_imgs|length > 1 else product_imgs[0] %}
+                                
                                 <div class="product-image">
                                     <img class="main-image"
                                        src="{{ main_image }}"
@@ -77,16 +34,16 @@
                             {% else %}
                                 <div class="product-image">
                                     <img class="main-image"
-                                       src="/static/img/no-image.jpg"
+                                       src="/static/img/goods/no-image.jpg"
                                        alt="Изображение недоступно"
                                        loading="lazy">
                                 </div>
                             {% endif %}
                             <h3>{{ product.title }}</h3>
                             <div class="price">
-                                <span class="current-price">{{ product.price }} {{ config.get('CURRENCY', 'RUB') }}</span>
+                                <span class="current-price">{{ product.price }} {{ config.get('CURRENCY', '₽') }}</span>
                                 {% if product.old_price %}
-                                    <span class="old-price">{{ product.old_price }} {{ config.get('CURRENCY', 'RUB') }}</span>
+                                    <span class="old-price">{{ product.old_price }} {{ config.get('CURRENCY', '₽') }}</span>
                                 {% endif %}
                             </div>
                         </a>
@@ -101,28 +58,17 @@
                     <div class="category-section">
                         <div class="category-header">
                             <h2 class="color-1">{{ category.title() }}</h2>
-                            <!--a href="{{ url_for('public.catalog', category=category) }}" class="view-all-link">
-                                Смотреть все →
-                            </a-->
                         </div>
                         
                         <div class="products-grid">
                             {% for product in category_products[:4] %}
                                 <div class="product-card">
                                     <a href="{{ url_for('public.product_detail', sku=product.sku) }}">
-                                        {% if product.images and product.images|length > 0 %}
-                                            {% set base_name = product.images[0].rsplit('.', 1)[0] %}
-                                            {% set extension = product.images[0].rsplit('.', 1)[1] %}
-                                            {% if base_name.endswith('_1') %}
-                                                {% set main_image = product.images[0] %}
-                                                {% set hover_image = base_name[:-2] + '_2.' + extension %}
-                                            {% elif base_name.endswith('_2') %}
-                                                {% set main_image = base_name[:-2] + '_1.' + extension %}
-                                                {% set hover_image = product.images[0] %}
-                                            {% else %}
-                                                {% set main_image = base_name + '_1.' + extension %}
-                                                {% set hover_image = base_name + '_2.' + extension %}
-                                            {% endif %}
+                                        {% set product_imgs = product_images(product.sku, 2) %}
+                                        {% if product_imgs and product_imgs|length > 0 and not product_imgs[0].endswith('no-image.jpg') %}
+                                            {% set main_image = product_imgs[0] %}
+                                            {% set hover_image = product_imgs[1] if product_imgs|length > 1 else product_imgs[0] %}
+                                            
                                             <div class="product-image">
                                                 <img class="main-image"
                                                    src="{{ main_image }}"
@@ -136,16 +82,16 @@
                                         {% else %}
                                             <div class="product-image">
                                                 <img class="main-image"
-                                                   src="/static/img/no-image.jpg"
+                                                   src="/static/img/goods/no-image.jpg"
                                                    alt="Изображение недоступно"
                                                    loading="lazy">
                                             </div>
                                         {% endif %}
                                         <h3>{{ product.title }}</h3>
                                         <div class="price">
-                                            <span class="current-price">{{ product.price }} {{ config.get('CURRENCY', 'RUB') }}</span>
+                                            <span class="current-price">{{ product.price }} {{ config.get('CURRENCY', '₽') }}</span>
                                             {% if product.old_price %}
-                                                <span class="old-price">{{ product.old_price }} {{ config.get('CURRENCY', 'RUB') }}</span>
+                                                <span class="old-price">{{ product.old_price }} {{ config.get('CURRENCY', '₽') }}</span>
                                             {% endif %}
                                         </div>
                                     </a>

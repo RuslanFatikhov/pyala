@@ -228,12 +228,13 @@ footer a{
     top: 0px;
 }
 
-.product-card:hover h3 {
+.product-card h3 {
   background-color: var(--color-3);
 }
 
-.product-card:hover .price {
+.product-card .price {
   background-color: var(--color-3);
+  padding: 5px 10px;
 }
 
 .vstack{
@@ -295,5 +296,21 @@ footer a{
 
     .nav-links{
         display: none;
+    }
+
+    .product-card{
+        border-top: 1px solid var(--color-2);
+    }
+
+    .product-card h3{
+        background-color: var(--color-3);
+        margin-top: 0px;
+        height: 50px;
+        width: 100%;
+    }
+
+    .price{
+        padding: 5px;
+        background-color: var(--color-3);
     }
 }

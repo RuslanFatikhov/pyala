@@ -44,9 +44,9 @@
                         
                         <h3>{{ product.title }}</h3>
                         <div class="price">
-                            <span class="current-price">{{ product.price }} {{ config.get('CURRENCY', 'RUB') }}</span>
+                            <span class="current-price">{{ product.price }} {{ config.get('CURRENCY', '₽') }}</span>
                             {% if product.old_price %}
-                                <span class="old-price">{{ product.old_price }} {{ config.get('CURRENCY', 'RUB') }}</span>
+                                <span class="old-price">{{ product.old_price }} {{ config.get('CURRENCY', '₽') }}</span>
                             {% endif %}
                         </div>
                     </a>

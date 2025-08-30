@@ -20,19 +20,20 @@
         
     <!-- Левая колонка: изображения -->
     <div class="product-images">
-        {% if product.images and product.images|length > 0 %}
+        {% set product_imgs = product_images(product.sku) %}
+        {% if product_imgs and product_imgs|length > 0 and not product_imgs[0].endswith('no-image.jpg') %}
             <!-- Главное изображение -->
             <div class="main-image">
                 <img id="main-product-image" 
-                     src="{{ product.images[0] }}" 
+                     src="{{ product_imgs[0] }}" 
                      alt="{{ product.title }}"
-                     onerror="this.src='/static/img/no-image.jpg'">
+                     onerror="this.src='/static/img/goods/no-image.jpg'">
             </div>
 
             <!-- Миниатюры (если больше одного изображения) -->
-            {% if product.images|length > 1 %}
+            {% if product_imgs|length > 1 %}
                 <div class="image-thumbnails">
-                    {% for image in product.images %}
+                    {% for image in product_imgs %}
                         <img src="{{ image }}" 
                              alt="{{ product.title }}" 
                              class="thumbnail {% if loop.first %}active{% endif %}"
@@ -124,19 +125,20 @@
         
     <!-- Левая колонка: изображения -->
     <div class="product-images">
-        {% if product.images and product.images|length > 0 %}
+        {% set product_imgs = product_images(product.sku) %}
+        {% if product_imgs and product_imgs|length > 0 and not product_imgs[0].endswith('no-image.jpg') %}
             <!-- Главное изображение -->
             <div class="main-image">
                 <img id="main-product-image" 
-                     src="{{ product.images[0] }}" 
+                     src="{{ product_imgs[0] }}" 
                      alt="{{ product.title }}"
-                     onerror="this.src='/static/img/no-image.jpg'">
+                     onerror="this.src='/static/img/goods/no-image.jpg'">
             </div>
 
             <!-- Миниатюры (если больше одного изображения) -->
-            {% if product.images|length > 1 %}
+            {% if product_imgs|length > 1 %}
                 <div class="image-thumbnails">
-                    {% for image in product.images %}
+                    {% for image in product_imgs %}
                         <img src="{{ image }}" 
                              alt="{{ product.title }}" 
                              class="thumbnail {% if loop.first %}active{% endif %}"
